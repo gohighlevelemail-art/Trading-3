@@ -1000,12 +1000,12 @@
             <div class="card-title">🤖 Risk Analysis Assistant</div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <button 
-                onclick="showApiKeyPrompt()" 
+                onclick="showWorkerUrlPrompt()" 
                 class="btn btn-ghost" 
                 style="padding: 4px 10px; font-size: 11px;"
-                title="Set API Key"
+                title="Set Worker URL"
               >
-                ⚙️ API Key
+                ⚙️ Setup
               </button>
               <div class="card-note">
                 Ask questions about your position risk
@@ -1016,7 +1016,7 @@
           <div id="chatMessages" style="max-height: 300px; overflow-y: auto; margin-bottom: 12px; padding: 10px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
             <div style="color: var(--muted); font-size: 13px; text-align: center; padding: 20px;">
               💬 Ask me anything about your risk management, position sizing, or trade strategy!<br><br>
-              <span style="font-size: 11px; color: #6b7280;">First time? Click "⚙️ API Key" to add your Anthropic API key.</span>
+              <span style="font-size: 11px; color: #6b7280;">First time? Click "⚙️ Setup" to add your Cloudflare Worker URL.</span>
             </div>
           </div>
 
@@ -1609,63 +1609,22 @@
     const chatInput = document.getElementById("chatInput");
     const chatSendButton = document.getElementById("chatSendButton");
 
-    // Get API key from localStorage (secure, not in code)
-    function getApiKey() {
-      return localStorage.getItem("anthropic_api_key");
-    }
+    // Your Cloudflare Worker URL - REPLACE THIS with your actual worker URL
+    const WORKER_URL = "https://YOUR-WORKER-NAME.YOUR-USERNAME.workers.dev";
 
-    function setApiKey(key) {
-      localStorage.setItem("anthropic_api_key", key);
-    }
-
-    function showApiKeyPrompt() {
-      const currentKey = getApiKey();
-      const message = currentKey 
-        ? `Current API key: ${currentKey.substring(0, 20)}...${currentKey.substring(currentKey.length - 4)}\n\nEnter a new key to replace it, or click Cancel to keep the current key.`
-        : "Enter your Anthropic API key to enable AI chat:\n\n(Get one at console.anthropic.com)\n\nYour key is stored locally and never shared.";
+    function showWorkerUrlPrompt() {
+      const currentUrl = localStorage.getItem("worker_url") || WORKER_URL;
+      const message = `Enter your Cloudflare Worker URL:\n\n(Format: https://your-worker.your-username.workers.dev)\n\nCurrent: ${currentUrl}`;
       
-      const key = prompt(message);
-      if (key && key.trim()) {
-        const cleanKey = key.trim();
-        // Validate key format
-        if (!cleanKey.startsWith('sk-ant-')) {
-          alert("⚠️ Invalid API key format. Keys should start with 'sk-ant-'");
-          return;
-        }
-        setApiKey(cleanKey);
-        addChatMessage("✅ API key saved! You can now chat with the AI assistant.", false);
-        
-        // Test the key
-        testApiKey(cleanKey);
+      const url = prompt(message, currentUrl);
+      if (url && url.trim()) {
+        localStorage.setItem("worker_url", url.trim());
+        addChatMessage("✅ Worker URL saved! Try sending a message.", false);
       }
     }
 
-    async function testApiKey(apiKey) {
-      try {
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": apiKey,
-            "anthropic-version": "2023-06-01"
-          },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 50,
-            messages: [{ role: "user", content: "Say 'API key works!'" }]
-          })
-        });
-
-        if (response.ok) {
-          addChatMessage("🎉 API key verified! Ready to chat.", false);
-        } else {
-          const error = await response.json();
-          addChatMessage(`⚠️ API key issue: ${error.error?.message || "Invalid key"}`, false);
-        }
-      } catch (error) {
-        console.error("Test error:", error);
-        addChatMessage("⚠️ Could not verify API key. Check your internet connection.", false);
-      }
+    function getWorkerUrl() {
+      return localStorage.getItem("worker_url") || WORKER_URL;
     }
 
     function addChatMessage(message, isUser = false) {
@@ -1689,10 +1648,9 @@
       const userMessage = chatInput.value.trim();
       if (!userMessage) return;
 
-      // Check for API key
-      const apiKey = getApiKey();
-      if (!apiKey) {
-        showApiKeyPrompt();
+      const workerUrl = getWorkerUrl();
+      if (workerUrl.includes("YOUR-WORKER-NAME") || workerUrl.includes("YOUR-USERNAME")) {
+        addChatMessage("⚠️ Please set your Cloudflare Worker URL first. Click '⚙️ Setup' button.", false);
         return;
       }
 
@@ -1726,55 +1684,28 @@ Current Trade Details:
 `;
       }
 
-      const systemPrompt = `You are a professional trading risk management advisor. You help traders analyze their positions and make smart decisions.
-
-The user is using TradeZero broker with the following fee structure:
-- Market orders under 200 shares: $0.99 flat
-- Market orders 200+ shares: $0.005 per share
-- Limit orders 200+ shares (if stock ≥$1): FREE (ZeroFree)
-- TAF: $0.02 per trade
-- Locate fees: Variable for shorts
-
-Risk tolerance guidelines:
-- 0-34% of margin: Acceptable/Controlled Risk (GREEN)
-- 35-66% of margin: Moderate Risk (YELLOW)
-- 67-100% of margin: High Risk (RED)
-
-${tradeContext}
-
-Provide concise, actionable advice. Be direct and honest about risks. Ask clarifying questions when needed.`;
-
       try {
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
+        const response = await fetch(workerUrl, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "x-api-key": apiKey,
-            "anthropic-version": "2023-06-01"
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 1024,
-            system: systemPrompt,
-            messages: [
-              {
-                role: "user",
-                content: userMessage
-              }
-            ]
+            message: userMessage,
+            tradeContext: tradeContext
           })
         });
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error("API Error:", errorData);
+          console.error("Worker Error:", errorData);
           
           if (response.status === 401) {
-            addChatMessage("❌ Invalid API key. Click '⚙️ API Key' to enter a valid key.", false);
+            addChatMessage("❌ Worker authentication failed. Check your API key in Cloudflare settings.", false);
           } else if (response.status === 429) {
             addChatMessage("⚠️ Rate limit exceeded. Please wait a moment and try again.", false);
           } else {
-            addChatMessage(`Error: ${errorData.error?.message || "Unknown error"}`, false);
+            addChatMessage(`Error: ${errorData.error || "Unknown error"}`, false);
           }
           chatSendButton.disabled = false;
           chatSendButton.textContent = "Send";
@@ -1786,14 +1717,14 @@ Provide concise, actionable advice. Be direct and honest about risks. Ask clarif
         if (data.content && data.content[0] && data.content[0].text) {
           addChatMessage(data.content[0].text, false);
         } else if (data.error) {
-          addChatMessage(`Error: ${data.error.message}`, false);
+          addChatMessage(`Error: ${data.error.message || data.error}`, false);
         } else {
           addChatMessage("Sorry, I couldn't process that. Please try again.", false);
         }
       } catch (error) {
         console.error("Chat error:", error);
         if (error.message.includes("Failed to fetch")) {
-          addChatMessage("❌ Network error. Check your internet connection or try again.", false);
+          addChatMessage("❌ Could not connect to worker. Check the URL and try again.", false);
         } else {
           addChatMessage(`Error: ${error.message}`, false);
         }
