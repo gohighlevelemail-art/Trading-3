@@ -1619,10 +1619,52 @@
     }
 
     function showApiKeyPrompt() {
-      const key = prompt("Enter your Anthropic API key to enable AI chat:\n\n(Get one at console.anthropic.com)\n\nYour key is stored locally and never shared.");
+      const currentKey = getApiKey();
+      const message = currentKey 
+        ? `Current API key: ${currentKey.substring(0, 20)}...${currentKey.substring(currentKey.length - 4)}\n\nEnter a new key to replace it, or click Cancel to keep the current key.`
+        : "Enter your Anthropic API key to enable AI chat:\n\n(Get one at console.anthropic.com)\n\nYour key is stored locally and never shared.";
+      
+      const key = prompt(message);
       if (key && key.trim()) {
-        setApiKey(key.trim());
+        const cleanKey = key.trim();
+        // Validate key format
+        if (!cleanKey.startsWith('sk-ant-')) {
+          alert("⚠️ Invalid API key format. Keys should start with 'sk-ant-'");
+          return;
+        }
+        setApiKey(cleanKey);
         addChatMessage("✅ API key saved! You can now chat with the AI assistant.", false);
+        
+        // Test the key
+        testApiKey(cleanKey);
+      }
+    }
+
+    async function testApiKey(apiKey) {
+      try {
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+            "anthropic-version": "2023-06-01"
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 50,
+            messages: [{ role: "user", content: "Say 'API key works!'" }]
+          })
+        });
+
+        if (response.ok) {
+          addChatMessage("🎉 API key verified! Ready to chat.", false);
+        } else {
+          const error = await response.json();
+          addChatMessage(`⚠️ API key issue: ${error.error?.message || "Invalid key"}`, false);
+        }
+      } catch (error) {
+        console.error("Test error:", error);
+        addChatMessage("⚠️ Could not verify API key. Check your internet connection.", false);
       }
     }
 
@@ -1723,18 +1765,38 @@ Provide concise, actionable advice. Be direct and honest about risks. Ask clarif
           })
         });
 
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("API Error:", errorData);
+          
+          if (response.status === 401) {
+            addChatMessage("❌ Invalid API key. Click '⚙️ API Key' to enter a valid key.", false);
+          } else if (response.status === 429) {
+            addChatMessage("⚠️ Rate limit exceeded. Please wait a moment and try again.", false);
+          } else {
+            addChatMessage(`Error: ${errorData.error?.message || "Unknown error"}`, false);
+          }
+          chatSendButton.disabled = false;
+          chatSendButton.textContent = "Send";
+          return;
+        }
+
         const data = await response.json();
         
         if (data.content && data.content[0] && data.content[0].text) {
           addChatMessage(data.content[0].text, false);
         } else if (data.error) {
-          addChatMessage(`Error: ${data.error.message}. Click the settings icon to update your API key.`, false);
+          addChatMessage(`Error: ${data.error.message}`, false);
         } else {
           addChatMessage("Sorry, I couldn't process that. Please try again.", false);
         }
       } catch (error) {
         console.error("Chat error:", error);
-        addChatMessage("Error connecting to AI assistant. Please check your API key and connection.", false);
+        if (error.message.includes("Failed to fetch")) {
+          addChatMessage("❌ Network error. Check your internet connection or try again.", false);
+        } else {
+          addChatMessage(`Error: ${error.message}`, false);
+        }
       }
 
       chatSendButton.disabled = false;
