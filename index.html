@@ -726,6 +726,10 @@
         <span class="tab-icon">🛡️</span>
         Risk Management
       </button>
+      <button class="tab-button" data-tab="locate">
+        <span class="tab-icon">💰</span>
+        Locate Fees
+      </button>
       <button class="tab-button" data-tab="portfolio">
         <span class="tab-icon">📈</span>
         Current Portfolio
@@ -1073,6 +1077,126 @@
         </div>
       </div>
 
+      <!-- LOCATE FEES TAB -->
+      <div class="tab-panel" id="tab-locate">
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title">Locate Fee Tracker</div>
+            <div class="card-note">
+              Track one-time locate fees and credits
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label for="locateTickerInput">Ticker Symbol</label>
+              <input
+                id="locateTickerInput"
+                class="input"
+                type="text"
+                placeholder="e.g. VERO"
+                style="text-transform: uppercase;"
+              />
+            </div>
+
+            <div class="field">
+              <label for="locateFeeAmount">Locate Fee (One-Time Cost)</label>
+              <input
+                id="locateFeeAmount"
+                class="input"
+                type="number"
+                step="0.01"
+                placeholder="e.g. 4.48"
+              />
+            </div>
+
+            <div class="field">
+              <label for="locateCreditAmount">Credit Amount (When Buying Back)</label>
+              <input
+                id="locateCreditAmount"
+                class="input"
+                type="number"
+                step="0.01"
+                placeholder="e.g. 1.12"
+              />
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label for="locateNotes">Notes (Why holding these shares)</label>
+              <textarea
+                id="locateNotes"
+                class="input"
+                rows="3"
+                placeholder="e.g. Hard-to-borrow setup, holding for squeeze opportunity..."
+                style="resize: vertical; font-family: inherit;"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="actions-row">
+            <button class="btn btn-execute" id="logLocateButton">
+              ✅ Log Entry
+            </button>
+          </div>
+        </div>
+
+        <!-- Locate Fee Summary -->
+        <div class="card">
+          <div class="card-title">Locate Fee Summary</div>
+          
+          <div class="fees-card" style="margin-top: 12px;">
+            <div class="fees-body">
+              <div class="fee-row">
+                <div class="fee-name">Total Fees Paid</div>
+                <div class="fee-value" id="totalLocateFees" style="color: #f97373;">-$0.00</div>
+              </div>
+              <div class="fee-row">
+                <div class="fee-name">Total Credits</div>
+                <div class="fee-value" id="totalLocateCredits" style="color: #4ade80;">+$0.00</div>
+              </div>
+
+              <div class="fee-total">
+                <div class="fee-total-label">Net Cost</div>
+                <div class="fee-total-value" id="netLocateCost">$0.00</div>
+              </div>
+
+              <div class="net-row">
+                <div class="net-label">% of Portfolio</div>
+                <div class="net-value" id="locatePercentage">0.00%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Locate Log Table -->
+        <div class="card">
+          <div class="card-title">Locate Fee Log</div>
+          <div style="overflow-x: auto;">
+            <table class="trades-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Ticker</th>
+                  <th>Fee</th>
+                  <th>Credit</th>
+                  <th>Net</th>
+                  <th>Notes</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="locateLogBody">
+                <tr>
+                  <td colspan="8" style="text-align: center; color: var(--muted);">
+                    No locate fees logged yet
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- CURRENT PORTFOLIO TAB -->
       <div class="tab-panel" id="tab-portfolio">
         <!-- Daily P&L Summary -->
@@ -1192,6 +1316,7 @@
     let openPositions = JSON.parse(localStorage.getItem("openPositions")) || [];
     let closedPositions = JSON.parse(localStorage.getItem("closedPositions")) || [];
     let dailyPnLData = JSON.parse(localStorage.getItem("dailyPnLData")) || [];
+    let locateEntries = JSON.parse(localStorage.getItem("locateEntries")) || [];
 
     // ========== UTILITIES ==========
     function formatMoney(value) {
@@ -1315,6 +1440,7 @@
     const tabPanels = {
       fees: document.getElementById("tab-fees"),
       risk: document.getElementById("tab-risk"),
+      locate: document.getElementById("tab-locate"),
       portfolio: document.getElementById("tab-portfolio"),
       saved: document.getElementById("tab-saved"),
     };
@@ -1334,6 +1460,8 @@
           displaySavedTrades();
         } else if (tab === "portfolio") {
           updatePortfolioTab();
+        } else if (tab === "locate") {
+          updateLocateSummary();
         }
       });
     });
@@ -1620,8 +1748,40 @@
       const tbody = document.getElementById("profitTableBody");
       tbody.innerHTML = "";
 
-      // Row 1: Fee row (0% to breakeven%, in red)
-      const row1 = tbody.insertRow();
+      // Generate 6 NEGATIVE rows (losses) - going from -30% to 0%
+      for (let i = 5; i >= 0; i--) {
+        const row = tbody.insertRow();
+        const rangeStart = -30 + (i * 5); // -30, -25, -20, -15, -10, -5
+        const rangeEnd = rangeStart + 5;   // -25, -20, -15, -10, -5, 0
+
+        const dollarStart = (grossAmount * rangeStart) / 100;
+        const dollarEnd = (grossAmount * rangeEnd) / 100;
+
+        // Calculate price range based on side
+        let priceStart, priceEnd;
+        if (side === "long") {
+          // Long: negative % = price goes DOWN = loss
+          priceStart = price * (1 + rangeStart / 100);
+          priceEnd = price * (1 + rangeEnd / 100);
+        } else {
+          // Short: negative % = price goes UP = loss
+          priceStart = price * (1 - rangeEnd / 100);
+          priceEnd = price * (1 - rangeStart / 100);
+        }
+
+        // Include fees in the loss calculation
+        const lossStart = dollarStart - totalFees;
+        const lossEnd = dollarEnd - totalFees;
+
+        row.innerHTML = `
+          <td>${rangeStart}% - ${rangeEnd}%</td>
+          <td>$${priceStart.toFixed(2)} - $${priceEnd.toFixed(2)}</td>
+          <td class="profit-loss">${formatMoney(lossStart)} - ${formatMoney(lossEnd)}</td>
+        `;
+      }
+
+      // Row: Fee row (0% to breakeven%, in red)
+      const feeRow = tbody.insertRow();
       const feePercent = Math.ceil(breakEvenPercent * 100) / 100;
       
       // Calculate price range for fee row
@@ -1635,13 +1795,13 @@
         feeMaxPrice = price; // 0% change
       }
       
-      row1.innerHTML = `
+      feeRow.innerHTML = `
         <td>0% - ${feePercent.toFixed(2)}%</td>
         <td>$${feeMinPrice.toFixed(2)} - $${feeMaxPrice.toFixed(2)}</td>
         <td class="profit-loss">$0.00 - $${breakEvenDollar.toFixed(2)}</td>
       `;
 
-      // Determine starting percentage
+      // Determine starting percentage for profit rows
       let startPercent = Math.ceil(breakEvenPercent);
       if (startPercent < 5) {
         startPercent = 5;
@@ -1649,10 +1809,10 @@
         startPercent = Math.ceil(startPercent / 5) * 5;
       }
 
-      // Generate 5 more rows
-      for (let i = 0; i < 5; i++) {
+      // Generate 6 PROFIT rows (gains)
+      for (let i = 0; i < 6; i++) {
         const row = tbody.insertRow();
-        const rangeStart = startPercent + i * 5;
+        const rangeStart = startPercent + (i * 5);
         const rangeEnd = rangeStart + 5;
 
         const dollarStart = (grossAmount * rangeStart) / 100;
@@ -1841,6 +2001,136 @@ Current Trade Details:
         sendChatMessage();
       }
     });
+
+    // ========== LOCATE FEES FUNCTIONS ==========
+    const logLocateButton = document.getElementById("logLocateButton");
+
+    logLocateButton.addEventListener("click", () => {
+      const ticker = document.getElementById("locateTickerInput").value.trim().toUpperCase();
+      const feeAmount = parseFloat(document.getElementById("locateFeeAmount").value) || 0;
+      const creditAmount = parseFloat(document.getElementById("locateCreditAmount").value) || 0;
+      const notes = document.getElementById("locateNotes").value.trim();
+
+      if (!ticker && feeAmount === 0 && creditAmount === 0) {
+        alert("Please enter ticker and at least a fee or credit amount");
+        return;
+      }
+
+      const now = new Date();
+      const est = toEstDate(now);
+
+      const entry = {
+        ticker: ticker || "N/A",
+        fee: feeAmount,
+        credit: creditAmount,
+        net: creditAmount - feeAmount, // Credit is positive, fee is cost
+        notes: notes || "No notes",
+        date: est.toLocaleDateString("en-US"),
+        time: est.toLocaleTimeString("en-US"),
+        timestamp: Date.now()
+      };
+
+      locateEntries.push(entry);
+      localStorage.setItem("locateEntries", JSON.stringify(locateEntries));
+
+      // Clear inputs
+      document.getElementById("locateTickerInput").value = "";
+      document.getElementById("locateFeeAmount").value = "";
+      document.getElementById("locateCreditAmount").value = "";
+      document.getElementById("locateNotes").value = "";
+
+      updateLocateSummary();
+      alert("Locate entry logged!");
+    });
+
+    function updateLocateSummary() {
+      // Calculate totals
+      let totalFees = 0;
+      let totalCredits = 0;
+
+      locateEntries.forEach(entry => {
+        totalFees += entry.fee;
+        totalCredits += entry.credit;
+      });
+
+      const netCost = totalCredits - totalFees;
+
+      // Update display
+      document.getElementById("totalLocateFees").textContent = "-$" + totalFees.toFixed(2);
+      document.getElementById("totalLocateCredits").textContent = "+$" + totalCredits.toFixed(2);
+      
+      const netCostEl = document.getElementById("netLocateCost");
+      netCostEl.textContent = formatMoney(netCost);
+      if (netCost < 0) {
+        netCostEl.style.color = "#f97373";
+      } else if (netCost > 0) {
+        netCostEl.style.color = "#4ade80";
+      } else {
+        netCostEl.style.color = "#fbbf24";
+      }
+
+      // Calculate % of portfolio
+      const portfolioValue = portfolioInput.value.replace(/[$,]/g, "");
+      const portfolio = parseFloat(portfolioValue) || 1;
+      const percentage = (netCost / portfolio) * 100;
+      
+      const percentEl = document.getElementById("locatePercentage");
+      percentEl.textContent = percentage.toFixed(2) + "%";
+      if (percentage < 0) {
+        percentEl.style.color = "#f97373";
+      } else if (percentage > 0) {
+        percentEl.style.color = "#4ade80";
+      } else {
+        percentEl.style.color = "#93c5fd";
+      }
+
+      // Update table
+      displayLocateLog();
+    }
+
+    function displayLocateLog() {
+      const tbody = document.getElementById("locateLogBody");
+
+      if (locateEntries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--muted);">No locate fees logged yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = "";
+      locateEntries.forEach((entry, index) => {
+        const row = tbody.insertRow();
+        const netColor = entry.net >= 0 ? "#4ade80" : "#f97373";
+        const feeColor = entry.fee > 0 ? "#f97373" : "#9ca3af";
+        const creditColor = entry.credit > 0 ? "#4ade80" : "#9ca3af";
+
+        row.innerHTML = `
+          <td>${entry.date}</td>
+          <td>${entry.time}</td>
+          <td style="font-weight: 600;">${entry.ticker}</td>
+          <td style="color: ${feeColor};">${entry.fee > 0 ? "-$" + entry.fee.toFixed(2) : "$0.00"}</td>
+          <td style="color: ${creditColor};">${entry.credit > 0 ? "+$" + entry.credit.toFixed(2) : "$0.00"}</td>
+          <td style="font-weight: 600; color: ${netColor};">${formatMoney(entry.net)}</td>
+          <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${entry.notes}">${entry.notes}</td>
+          <td>
+            <button 
+              class="btn btn-cancel" 
+              style="padding: 3px 8px; font-size: 10px;"
+              onclick="deleteLocateEntry(${index})"
+            >
+              Delete
+            </button>
+          </td>
+        `;
+      });
+    }
+
+    window.deleteLocateEntry = function(index) {
+      if (confirm("Delete this locate entry?")) {
+        locateEntries.splice(index, 1);
+        localStorage.setItem("locateEntries", JSON.stringify(locateEntries));
+        updateLocateSummary();
+      }
+    };
 
     // ========== PORTFOLIO TAB FUNCTIONS ==========
     function updatePortfolioTab() {
@@ -2087,6 +2377,7 @@ Current Trade Details:
     displaySavedTrades();
     checkDailyReset();
     updatePortfolioTab();
+    updateLocateSummary();
   </script>
 </body>
 </html>
