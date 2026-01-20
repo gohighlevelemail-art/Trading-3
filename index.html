@@ -1259,14 +1259,17 @@
       const totalMinutes = est.getHours() * 60 + est.getMinutes();
 
       let leverage = 1;
-      if (totalMinutes >= 240 && totalMinutes < 960) {
-        // 4 AM - 4 PM
+      if (totalMinutes >= 540 && totalMinutes < 960) {
+        // 9:00 AM - 4:00 PM = 3:1 leverage
         leverage = 3;
+      } else if (totalMinutes >= 240 && totalMinutes < 540) {
+        // 4:00 AM - 9:00 AM = 2:1 leverage
+        leverage = 2;
       } else if (totalMinutes >= 960 && totalMinutes < 1200) {
-        // 4 PM - 8 PM
+        // 4:00 PM - 8:00 PM = 2:1 leverage
         leverage = 2;
       } else {
-        // After 8 PM or before 4 AM
+        // After 8:00 PM or before 4:00 AM = 2:1 leverage
         leverage = 2;
       }
 
