@@ -1781,33 +1781,60 @@
         isZeroFree = true;
       }
 
-      // Commission
-      let commission = 0;
+      // ========== ENTRY FEES ==========
+      // Entry Commission
+      let entryCommission = 0;
       if (price < 1) {
         // Stocks under $1
-        commission = shares * 0.005;
-        commission = Math.max(0.99, Math.min(7.95, commission));
+        entryCommission = shares * 0.005;
+        entryCommission = Math.max(0.99, Math.min(7.95, entryCommission));
       } else if (isZeroFree) {
-        commission = 0;
+        entryCommission = 0;
       } else if (orderType === "market" && shares < 200) {
-        commission = 0.99;
+        entryCommission = 0.99;
       } else if (orderType === "market" && shares >= 200) {
-        commission = shares * 0.005;
+        entryCommission = shares * 0.005;
       } else {
-        commission = 0.99;
+        entryCommission = 0.99;
       }
 
-      // TAF
-      const taf = 0.02;
+      // Entry TAF
+      const entryTaf = 0.02;
 
       // Locate fee
       const locateFee = side === "short" ? locate : 0;
 
-      const totalFees = commission + taf + locateFee;
+      const entryFees = entryCommission + entryTaf + locateFee;
+
+      // ========== EXIT FEES (ESTIMATED) ==========
+      // Exit Commission (when selling/covering)
+      let exitCommission = 0;
+      if (price < 1) {
+        // Stocks under $1
+        exitCommission = shares * 0.005;
+        exitCommission = Math.max(0.99, Math.min(7.95, exitCommission));
+      } else if (shares < 200) {
+        // < 200 shares: $0.99 flat
+        exitCommission = 0.99;
+      } else if (shares >= 200 && price >= 1) {
+        // Assume ZeroFree limit on exit
+        exitCommission = 0;
+      } else {
+        // 200+ shares, price < $1
+        exitCommission = shares * 0.005;
+      }
+
+      // Exit TAF
+      const exitTaf = 0.02;
+      
+      const exitFees = exitCommission + exitTaf;
+
+      // ========== TOTAL FEES (ENTRY + EXIT) ==========
+      const totalFees = entryFees + exitFees;
       const net = grossAmount + totalFees;
 
-      feeCommission.textContent = formatMoney(commission);
-      feeTAF.textContent = formatMoney(taf);
+      feeCommission.textContent = formatMoney(entryCommission);
+      feeTAF.textContent = formatMoney(entryTaf);
       feeLocate.textContent = formatMoney(locateFee);
       feeTotal.textContent = formatMoney(totalFees);
       netAmount.textContent = formatMoney(net);
@@ -1820,12 +1847,12 @@
         summaryBadge.className = "summary-badge free";
         summaryBadge.textContent = "ZeroFree Trade";
         statusMessage.textContent =
-          "This order meets ZeroFree conditions: Limit, ≥200 shares, price ≥$1.";
+          "Entry meets ZeroFree. Exit fees: $" + exitFees.toFixed(2) + " estimated.";
       } else {
         summaryBadge.className = "summary-badge paid";
         summaryBadge.textContent = "Commission Charged";
         statusMessage.textContent =
-          "This order does not meet ZeroFree rules. Commission applies.";
+          "Entry commission: $" + entryCommission.toFixed(2) + ". Exit fees: $" + exitFees.toFixed(2) + " estimated.";
       }
 
       currentTradeData = {
@@ -1836,8 +1863,12 @@
         price,
         shares,
         locateFee,
-        commission,
-        taf,
+        entryCommission,
+        entryTaf,
+        entryFees,
+        exitCommission,
+        exitTaf,
+        exitFees,
         totalFees,
         grossAmount,
         netAmount: net,
@@ -1870,8 +1901,10 @@
         const totalShares = existing.shares + currentTradeData.shares;
         const avgPrice = (existingCost + newCost) / totalShares;
         
-        // Combine fees
-        const totalFees = existing.entryFees + currentTradeData.totalFees;
+        // Combine fees (add new entry fees to existing entry fees, keep exit fees separate)
+        const totalEntryFees = existing.entryFees + currentTradeData.entryFees;
+        const totalExitFees = currentTradeData.exitFees; // Use latest exit fee estimate
+        const totalFees = totalEntryFees + totalExitFees;
         const totalGrossAmount = existingCost + newCost;
         const totalNetAmount = totalGrossAmount + totalFees;
         
@@ -1881,7 +1914,9 @@
           shares: totalShares,
           price: avgPrice,
           grossAmount: totalGrossAmount,
-          entryFees: totalFees,
+          entryFees: totalEntryFees,
+          exitFees: totalExitFees,
+          totalFees: totalFees,
           netAmount: totalNetAmount,
           lastUpdated: est.toLocaleDateString("en-US") + " " + est.toLocaleTimeString("en-US")
         };
@@ -1897,9 +1932,7 @@
           time: est.toLocaleTimeString("en-US"),
           timestamp: Date.now(),
           status: "open",
-          entryFees: currentTradeData.totalFees,
           exitPrice: null,
-          exitFees: null,
           pnl: null
         };
 
@@ -2669,19 +2702,8 @@ Current Trade Details:
         return;
       }
 
-      // Calculate exit fees
-      let exitFees = 0.02; // TAF
-      if (pos.price < 1) {
-        exitFees += Math.max(0.99, Math.min(7.95, pos.shares * 0.005));
-      } else if (pos.orderType === "market" && pos.shares < 200) {
-        exitFees += 0.99;
-      } else if (pos.orderType === "market" && pos.shares >= 200) {
-        exitFees += pos.shares * 0.005;
-      } else if (pos.orderType === "limit" && pos.shares >= 200 && pos.price >= 1) {
-        exitFees += 0; // ZeroFree
-      } else {
-        exitFees += 0.99;
-      }
+      // Use stored exit fees (already calculated in Fee Structure)
+      const exitFees = pos.exitFees || 0;
 
       // Calculate P&L
       let pnl = 0;
@@ -2711,19 +2733,8 @@ Current Trade Details:
 
       const pos = openPositions[index];
 
-      // Calculate exit fees
-      let exitFees = 0.02; // TAF
-      if (pos.price < 1) {
-        exitFees += Math.max(0.99, Math.min(7.95, pos.shares * 0.005));
-      } else if (pos.orderType === "market" && pos.shares < 200) {
-        exitFees += 0.99;
-      } else if (pos.orderType === "market" && pos.shares >= 200) {
-        exitFees += pos.shares * 0.005;
-      } else if (pos.orderType === "limit" && pos.shares >= 200 && pos.price >= 1) {
-        exitFees += 0;
-      } else {
-        exitFees += 0.99;
-      }
+      // Use stored exit fees (already calculated in Fee Structure)
+      const exitFees = pos.exitFees || 0;
 
       // Calculate P&L
       let pnl = 0;
