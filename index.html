@@ -691,10 +691,19 @@
           Fee Structure &amp; Risk Management • TradeZero-style fee model
         </div>
       </div>
-      <div class="clock-block">
-        <div class="clock-line" id="clockDisplay">--/--/---- --:-- -- EST</div>
-        <div id="marketStatusPill" class="status-pill status-closed">
-          <span id="marketStatusText">Market Closed</span>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button class="btn btn-execute" id="exportDataButton" style="padding: 6px 12px; font-size: 11px;">
+          💾 Export Data
+        </button>
+        <button class="btn btn-cancel" id="importDataButton" style="padding: 6px 12px; font-size: 11px;">
+          📂 Import Data
+        </button>
+        <input type="file" id="importFileInput" accept=".json" style="display: none;" />
+        <div class="clock-block">
+          <div class="clock-line" id="clockDisplay">--/--/---- --:-- -- EST</div>
+          <div id="marketStatusPill" class="status-pill status-closed">
+            <span id="marketStatusText">Market Closed</span>
+          </div>
         </div>
       </div>
     </div>
@@ -2548,6 +2557,114 @@ Current Trade Details:
         localStorage.setItem("lastReset", today);
       }
     }
+
+    // ========== EXPORT/IMPORT DATA ==========
+    const exportDataButton = document.getElementById("exportDataButton");
+    const importDataButton = document.getElementById("importDataButton");
+    const importFileInput = document.getElementById("importFileInput");
+
+    exportDataButton.addEventListener("click", () => {
+      // Gather all data
+      const allData = {
+        exportDate: new Date().toISOString(),
+        portfolio: portfolioInput.value,
+        savedTrades: savedTrades,
+        openPositions: openPositions,
+        closedPositions: closedPositions,
+        locateEntries: locateEntries,
+        workerUrl: localStorage.getItem("worker_url")
+      };
+
+      // Convert to JSON
+      const dataStr = JSON.stringify(allData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: "application/json" });
+
+      // Create download link
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `trading-data-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      alert("✅ Data exported successfully! File saved to your Downloads folder.");
+    });
+
+    importDataButton.addEventListener("click", () => {
+      importFileInput.click();
+    });
+
+    importFileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const importedData = JSON.parse(event.target.result);
+
+          // Confirm before overwriting
+          const confirm_msg = `Import data from ${importedData.exportDate || 'unknown date'}?\n\n` +
+            `This will load:\n` +
+            `- ${importedData.savedTrades?.length || 0} Saved Trades\n` +
+            `- ${importedData.openPositions?.length || 0} Open Positions\n` +
+            `- ${importedData.closedPositions?.length || 0} Closed Positions\n` +
+            `- ${importedData.locateEntries?.length || 0} Locate Entries\n\n` +
+            `Current data will be REPLACED!`;
+
+          if (!confirm(confirm_msg)) {
+            importFileInput.value = "";
+            return;
+          }
+
+          // Load data
+          if (importedData.portfolio) {
+            portfolioInput.value = importedData.portfolio;
+            updateMarginAmount();
+          }
+
+          if (importedData.savedTrades) {
+            savedTrades = importedData.savedTrades;
+            localStorage.setItem("savedTrades", JSON.stringify(savedTrades));
+          }
+
+          if (importedData.openPositions) {
+            openPositions = importedData.openPositions;
+            localStorage.setItem("openPositions", JSON.stringify(openPositions));
+          }
+
+          if (importedData.closedPositions) {
+            closedPositions = importedData.closedPositions;
+            localStorage.setItem("closedPositions", JSON.stringify(closedPositions));
+          }
+
+          if (importedData.locateEntries) {
+            locateEntries = importedData.locateEntries;
+            localStorage.setItem("locateEntries", JSON.stringify(locateEntries));
+          }
+
+          if (importedData.workerUrl) {
+            localStorage.setItem("worker_url", importedData.workerUrl);
+          }
+
+          // Refresh displays
+          displaySavedTrades();
+          updatePortfolioTab();
+          updateLocateSummary();
+
+          alert("✅ Data imported successfully! All your trades and positions are loaded.");
+          importFileInput.value = "";
+
+        } catch (error) {
+          alert("❌ Error importing data: " + error.message);
+          importFileInput.value = "";
+        }
+      };
+
+      reader.readAsText(file);
+    });
 
     // ========== INIT ==========
     updateLocateVisibility();
