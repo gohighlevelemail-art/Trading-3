@@ -2555,9 +2555,9 @@ Current Trade Details:
 
     // ========== TRADEZERO ORDER PARSER ==========
     const tradeZeroInput = document.getElementById("tradeZeroInput");
-    const parseTradeZeroButton = document.getElementById("parseTradeZeroButton");
-    const clearTradeZeroButton = document.getElementById("clearTradeZeroButton");
-    const confirmImportButton = document.getElementById("confirmImportButton");
+    const parseTradeZeroButton = document.getElementById("parseOrdersButton");
+    const clearTradeZeroButton = document.getElementById("clearParserButton");
+    const confirmImportButton = document.getElementById("importAllOrdersButton");
     let parsedOrders = [];
 
     parseTradeZeroButton.addEventListener("click", () => {
@@ -2614,76 +2614,61 @@ Current Trade Details:
       const orders = [];
 
       lines.forEach(line => {
-        // Skip if doesn't contain 'F' status anywhere (more flexible check)
-        const hasFilledStatus = /\s+F\s+|\tF\t|LMT\s+F\s+|F\s+DAY/.test(line);
-        if (!hasFilledStatus) return;
-
-        // Split by any whitespace (tabs or spaces)
-        const cols = line.split(/\s+/).filter(c => c.trim());
-
-        let symbol, side, execQty, price, time;
-
-        // Extract data
-        for (let i = 0; i < cols.length; i++) {
-          const col = cols[i];
-          const nextCol = cols[i + 1] || '';
-
-          // Symbol (2-5 uppercase letters, usually after Ref No.)
-          if (/^[A-Z]{2,5}$/.test(col) && !symbol) {
-            symbol = col;
-            continue;
-          }
-
-          // Side (Buy/Short/Sell)
-          if (['Buy', 'Short', 'Sell'].includes(col) && !side) {
-            side = col;
-            continue;
-          }
-
-          // Exec column (filled quantity) - comes after Qty column
-          // Look for number in green (positive for Buy, negative for Short)
-          if (/^-?\d+$/.test(col) && symbol && side) {
-            // This could be Qty or Exec
-            // Exec is the actual filled amount
-            const num = parseInt(col);
-            if (Math.abs(num) > 0 && !execQty) {
-              // Check if next column is also a number (might be Cxl)
-              if (/^-?\d+$/.test(nextCol)) {
-                // This is Qty, next might be Exec
-                const execNum = parseInt(nextCol);
-                if (Math.abs(execNum) > 0) {
-                  execQty = Math.abs(execNum);
-                  i++; // Skip next column
-                }
-              } else {
-                execQty = Math.abs(num);
-              }
+        // Skip header lines
+        if (line.includes('Ref No.') || line.includes('Symbol')) return;
+        
+        // Split by whitespace
+        const parts = line.split(/\s+/);
+        
+        // Must have Status = F (Filled)
+        const statusIdx = parts.indexOf('F');
+        if (statusIdx === -1) return;
+        
+        let symbol, side, exec, price, time;
+        
+        // Find Symbol (uppercase 2-5 chars, not keywords)
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          
+          if (/^[A-Z]{2,5}$/.test(part) && 
+              !['Buy', 'Short', 'Sell', 'LMT', 'MKT', 'DAY', 'GTC'].includes(part) && 
+              !symbol) {
+            symbol = part;
+            
+            // Side is next column
+            if (i + 1 < parts.length && ['Buy', 'Short', 'Sell'].includes(parts[i + 1])) {
+              side = parts[i + 1];
             }
-            continue;
-          }
-
-          // Price (decimal, between 0.01 and 999999)
-          if (/^\d+\.\d+$/.test(col) && execQty && !price) {
-            const p = parseFloat(col);
-            if (p > 0 && p < 999999) {
-              price = p;
+            
+            // Exec is 3 columns after Symbol (column 5 in structure)
+            // Structure: Symbol(i) Side(i+1) Qty(i+2) Exec(i+3)
+            const execVal = parts[i + 3];
+            if (execVal && execVal !== '-' && /^-?\d+$/.test(execVal)) {
+              exec = Math.abs(parseInt(execVal));
             }
-            continue;
-          }
-
-          // Time (HH:MM:SS format at end)
-          if (/\d{2}:\d{2}:\d{2}$/.test(col) && !time) {
-            time = col;
-            continue;
+            
+            // Price is 2 columns after Status
+            const priceIdx = statusIdx + 2;
+            if (priceIdx < parts.length && /^\d+\.\d+$/.test(parts[priceIdx])) {
+              price = parseFloat(parts[priceIdx]);
+            }
+            
+            // Time is last element
+            const lastPart = parts[parts.length - 1];
+            if (/\d{2}:\d{2}:\d{2}/.test(lastPart)) {
+              time = lastPart;
+            }
+            
+            break;
           }
         }
-
-        // Validate we have minimum required data
-        if (symbol && side && execQty && execQty > 0 && price && price > 0) {
+        
+        // Validate required fields
+        if (symbol && side && exec && exec > 0 && price && price > 0) {
           orders.push({
             symbol,
             side,
-            qty: execQty,
+            qty: exec,
             price,
             time: time || 'N/A',
             shouldImport: true
