@@ -735,6 +735,10 @@
         <span class="tab-icon">🛡️</span>
         Risk Management
       </button>
+      <button class="tab-button" data-tab="winloss">
+        <span class="tab-icon">📈</span>
+        Win/Loss
+      </button>
       <button class="tab-button" data-tab="locate">
         <span class="tab-icon">💰</span>
         Locate Fees
@@ -1140,6 +1144,186 @@
         </div>
       </div>
 
+      <!-- WIN/LOSS TAB -->
+      <div class="tab-panel" id="tab-winloss">
+        <!-- Starting Balance Setup -->
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title">Starting Balance Setup</div>
+            <div class="card-note">
+              Set your baseline (one-time setup)
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end;">
+            <div class="field">
+              <label for="startingBalanceInput">Starting Balance</label>
+              <input
+                id="startingBalanceInput"
+                class="input"
+                type="number"
+                step="0.01"
+                placeholder="e.g. 1777.17"
+              />
+            </div>
+            <button class="btn btn-execute" id="setStartingBalanceButton" style="height: fit-content;">
+              Set Starting Balance
+            </button>
+          </div>
+          <div style="margin-top: 8px; font-size: 12px; color: var(--muted);">
+            Current Starting Balance: <span id="currentStartingBalance" style="color: #4ade80; font-weight: 600;">Not Set</span>
+          </div>
+        </div>
+
+        <!-- Daily Portfolio Logger -->
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title">Daily Portfolio Logger</div>
+            <div class="card-note">
+              Log your end-of-day portfolio value
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end;">
+            <div class="field">
+              <label for="dailyPortfolioInput">Today's Portfolio Value</label>
+              <input
+                id="dailyPortfolioInput"
+                class="input"
+                type="number"
+                step="0.01"
+                placeholder="e.g. 1807.17"
+              />
+            </div>
+            <button class="btn btn-execute" id="logDailyPortfolioButton" style="height: fit-content;">
+              Log Today
+            </button>
+          </div>
+        </div>
+
+        <!-- Performance Metrics Summary -->
+        <div class="card">
+          <div class="card-title">📊 Performance Metrics</div>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin-top: 12px;">
+            <!-- Row 1: Basic Metrics -->
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Starting Balance</div>
+              <div id="metricsStarting" style="font-size: 18px; font-weight: 700; color: #93c5fd;">$0.00</div>
+            </div>
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Current Balance</div>
+              <div id="metricsCurrent" style="font-size: 18px; font-weight: 700; color: #93c5fd;">$0.00</div>
+            </div>
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Total Gain/Loss</div>
+              <div id="metricsTotalPnL" style="font-size: 18px; font-weight: 700; color: var(--muted);">$0.00 (0%)</div>
+            </div>
+
+            <!-- Row 2: Daily Metrics -->
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Best Day</div>
+              <div id="metricsBestDay" style="font-size: 16px; font-weight: 700; color: #4ade80;">--</div>
+            </div>
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Worst Day</div>
+              <div id="metricsWorstDay" style="font-size: 16px; font-weight: 700; color: #f97373;">--</div>
+            </div>
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Avg Daily Return</div>
+              <div id="metricsAvgDaily" style="font-size: 16px; font-weight: 700; color: #e5e7eb;">--</div>
+            </div>
+
+            <!-- Row 3: Win Rate Metrics -->
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Win Rate</div>
+              <div id="metricsWinRate" style="font-size: 16px; font-weight: 700; color: #e5e7eb;">--</div>
+            </div>
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Win/Loss Ratio</div>
+              <div id="metricsWinLossRatio" style="font-size: 16px; font-weight: 700; color: #e5e7eb;">--</div>
+            </div>
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Profit Factor</div>
+              <div id="metricsProfitFactor" style="font-size: 16px; font-weight: 700; color: #e5e7eb;">--</div>
+            </div>
+
+            <!-- Row 4: Advanced Ratios -->
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Sharpe Ratio</div>
+              <div id="metricsSharpe" style="font-size: 16px; font-weight: 700; color: #e5e7eb;">--</div>
+            </div>
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Calmar Ratio</div>
+              <div id="metricsCalmar" style="font-size: 16px; font-weight: 700; color: #e5e7eb;">--</div>
+            </div>
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Recovery Factor</div>
+              <div id="metricsRecovery" style="font-size: 16px; font-weight: 700; color: #e5e7eb;">--</div>
+            </div>
+
+            <!-- Row 5: Risk Metrics -->
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Max Drawdown</div>
+              <div id="metricsMaxDrawdown" style="font-size: 16px; font-weight: 700; color: #f97373;">--</div>
+            </div>
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Expectancy</div>
+              <div id="metricsExpectancy" style="font-size: 16px; font-weight: 700; color: #e5e7eb;">--</div>
+            </div>
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Kelly Criterion</div>
+              <div id="metricsKelly" style="font-size: 16px; font-weight: 700; color: #e5e7eb;">--</div>
+            </div>
+
+            <!-- Row 6: Streak Metrics -->
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Max Consecutive Wins</div>
+              <div id="metricsMaxWins" style="font-size: 16px; font-weight: 700; color: #4ade80;">--</div>
+            </div>
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Max Consecutive Losses</div>
+              <div id="metricsMaxLosses" style="font-size: 16px; font-weight: 700; color: #f97373;">--</div>
+            </div>
+            <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+              <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Days Traded</div>
+              <div id="metricsDaysTraded" style="font-size: 16px; font-weight: 700; color: #e5e7eb;">--</div>
+            </div>
+          </div>
+
+          <!-- Daily Loss Warning -->
+          <div id="dailyLossWarning" style="display: none; margin-top: 12px; padding: 12px; background: rgba(249, 115, 115, 0.1); border: 1px solid #f97373; border-radius: 8px; color: #f97373; font-size: 13px; font-weight: 600;">
+            ⚠️ WARNING: Daily loss exceeds $400 limit!
+          </div>
+        </div>
+
+        <!-- Daily History Table -->
+        <div class="card">
+          <div class="card-title">Daily Portfolio History</div>
+          <div style="overflow-x: auto;">
+            <table class="trades-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Portfolio</th>
+                  <th>Daily Change</th>
+                  <th>Daily %</th>
+                  <th>Cumulative Gain</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="dailyHistoryBody">
+                <tr>
+                  <td colspan="6" style="text-align: center; color: var(--muted);">
+                    No portfolio history yet. Set starting balance and log your first day!
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- LOCATE FEES TAB -->
       <div class="tab-panel" id="tab-locate">
         <div class="card">
@@ -1370,6 +1554,8 @@
     let closedPositions = JSON.parse(localStorage.getItem("closedPositions")) || [];
     let dailyPnLData = JSON.parse(localStorage.getItem("dailyPnLData")) || [];
     let locateEntries = JSON.parse(localStorage.getItem("locateEntries")) || [];
+    let startingBalance = parseFloat(localStorage.getItem("startingBalance")) || null;
+    let dailyPortfolioLog = JSON.parse(localStorage.getItem("dailyPortfolioLog")) || [];
 
     // ========== UTILITIES ==========
     function formatMoney(value) {
@@ -1493,6 +1679,7 @@
     const tabPanels = {
       fees: document.getElementById("tab-fees"),
       risk: document.getElementById("tab-risk"),
+      winloss: document.getElementById("tab-winloss"),
       locate: document.getElementById("tab-locate"),
       portfolio: document.getElementById("tab-portfolio"),
       saved: document.getElementById("tab-saved"),
@@ -1515,6 +1702,8 @@
           updatePortfolioTab();
         } else if (tab === "locate") {
           updateLocateSummary();
+        } else if (tab === "winloss") {
+          updateWinLossMetrics();
         }
       });
     });
@@ -2558,6 +2747,357 @@ Current Trade Details:
       }
     }
 
+    // ========== WIN/LOSS TAB FUNCTIONS ==========
+    const setStartingBalanceButton = document.getElementById("setStartingBalanceButton");
+    const startingBalanceInput = document.getElementById("startingBalanceInput");
+    const logDailyPortfolioButton = document.getElementById("logDailyPortfolioButton");
+    const dailyPortfolioInput = document.getElementById("dailyPortfolioInput");
+
+    // Set starting balance
+    setStartingBalanceButton.addEventListener("click", () => {
+      const balance = parseFloat(startingBalanceInput.value);
+      if (!balance || balance <= 0) {
+        alert("Please enter a valid starting balance");
+        return;
+      }
+
+      startingBalance = balance;
+      localStorage.setItem("startingBalance", startingBalance);
+      document.getElementById("currentStartingBalance").textContent = formatMoney(balance);
+      alert("✅ Starting balance set to " + formatMoney(balance));
+      updateWinLossMetrics();
+    });
+
+    // Log daily portfolio
+    logDailyPortfolioButton.addEventListener("click", () => {
+      if (!startingBalance) {
+        alert("Please set your starting balance first!");
+        return;
+      }
+
+      const portfolioValue = parseFloat(dailyPortfolioInput.value);
+      if (!portfolioValue || portfolioValue <= 0) {
+        alert("Please enter a valid portfolio value");
+        return;
+      }
+
+      const today = new Date().toLocaleDateString("en-US");
+      
+      // Check if already logged today (overwrite if yes)
+      const existingIndex = dailyPortfolioLog.findIndex(entry => entry.date === today);
+      
+      const entry = {
+        date: today,
+        portfolio: portfolioValue,
+        timestamp: Date.now()
+      };
+
+      if (existingIndex !== -1) {
+        dailyPortfolioLog[existingIndex] = entry;
+        alert("✅ Today's portfolio value updated!");
+      } else {
+        dailyPortfolioLog.push(entry);
+        alert("✅ Portfolio logged for " + today);
+      }
+
+      localStorage.setItem("dailyPortfolioLog", JSON.stringify(dailyPortfolioLog));
+      dailyPortfolioInput.value = "";
+      updateWinLossMetrics();
+    });
+
+    function updateWinLossMetrics() {
+      // Update starting balance display
+      if (startingBalance) {
+        document.getElementById("currentStartingBalance").textContent = formatMoney(startingBalance);
+        startingBalanceInput.value = "";
+      }
+
+      // Display daily history
+      displayDailyHistory();
+
+      // Calculate metrics
+      if (!startingBalance || dailyPortfolioLog.length === 0) {
+        // Reset all metrics
+        document.getElementById("metricsStarting").textContent = startingBalance ? formatMoney(startingBalance) : "$0.00";
+        document.getElementById("metricsCurrent").textContent = "$0.00";
+        document.getElementById("metricsTotalPnL").textContent = "$0.00 (0%)";
+        document.getElementById("metricsBestDay").textContent = "--";
+        document.getElementById("metricsWorstDay").textContent = "--";
+        document.getElementById("metricsAvgDaily").textContent = "--";
+        document.getElementById("metricsWinRate").textContent = "--";
+        document.getElementById("metricsWinLossRatio").textContent = "--";
+        document.getElementById("metricsProfitFactor").textContent = "--";
+        document.getElementById("metricsSharpe").textContent = "--";
+        document.getElementById("metricsCalmar").textContent = "--";
+        document.getElementById("metricsRecovery").textContent = "--";
+        document.getElementById("metricsMaxDrawdown").textContent = "--";
+        document.getElementById("metricsExpectancy").textContent = "--";
+        document.getElementById("metricsKelly").textContent = "--";
+        document.getElementById("metricsMaxWins").textContent = "--";
+        document.getElementById("metricsMaxLosses").textContent = "--";
+        document.getElementById("metricsDaysTraded").textContent = "--";
+        return;
+      }
+
+      // Sort by date (oldest first)
+      const sorted = [...dailyPortfolioLog].sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      const currentBalance = sorted[sorted.length - 1].portfolio;
+      const totalPnL = currentBalance - startingBalance;
+      const totalPnLPercent = (totalPnL / startingBalance) * 100;
+
+      // Calculate daily changes
+      const dailyChanges = [];
+      let prevBalance = startingBalance;
+      
+      sorted.forEach(entry => {
+        const change = entry.portfolio - prevBalance;
+        const changePercent = (change / prevBalance) * 100;
+        dailyChanges.push({
+          date: entry.date,
+          change: change,
+          changePercent: changePercent,
+          balance: entry.portfolio
+        });
+        prevBalance = entry.portfolio;
+      });
+
+      // Basic metrics
+      document.getElementById("metricsStarting").textContent = formatMoney(startingBalance);
+      document.getElementById("metricsCurrent").textContent = formatMoney(currentBalance);
+      
+      const pnlEl = document.getElementById("metricsTotalPnL");
+      pnlEl.textContent = formatMoney(totalPnL) + " (" + (totalPnLPercent >= 0 ? "+" : "") + totalPnLPercent.toFixed(2) + "%)";
+      pnlEl.style.color = totalPnL >= 0 ? "#4ade80" : "#f97373";
+
+      // Best/Worst Day
+      const wins = dailyChanges.filter(d => d.change > 0);
+      const losses = dailyChanges.filter(d => d.change < 0);
+      
+      if (dailyChanges.length > 0) {
+        const bestDay = dailyChanges.reduce((max, d) => d.change > max.change ? d : max);
+        const worstDay = dailyChanges.reduce((min, d) => d.change < min.change ? d : min);
+        
+        document.getElementById("metricsBestDay").textContent = 
+          formatMoney(bestDay.change) + " (+" + bestDay.changePercent.toFixed(2) + "%)";
+        document.getElementById("metricsWorstDay").textContent = 
+          formatMoney(worstDay.change) + " (" + worstDay.changePercent.toFixed(2) + "%)";
+      }
+
+      // Average Daily Return
+      const avgChange = dailyChanges.reduce((sum, d) => sum + d.change, 0) / dailyChanges.length;
+      const avgChangePercent = dailyChanges.reduce((sum, d) => sum + d.changePercent, 0) / dailyChanges.length;
+      document.getElementById("metricsAvgDaily").textContent = 
+        formatMoney(avgChange) + " (" + (avgChangePercent >= 0 ? "+" : "") + avgChangePercent.toFixed(2) + "%)";
+
+      // Win Rate
+      const winRate = wins.length / dailyChanges.length * 100;
+      document.getElementById("metricsWinRate").textContent = 
+        winRate.toFixed(1) + "% (" + wins.length + "W / " + losses.length + "L)";
+
+      // Win/Loss Ratio
+      if (wins.length > 0 && losses.length > 0) {
+        const avgWin = wins.reduce((sum, d) => sum + d.change, 0) / wins.length;
+        const avgLoss = Math.abs(losses.reduce((sum, d) => sum + d.change, 0) / losses.length);
+        const winLossRatio = avgWin / avgLoss;
+        document.getElementById("metricsWinLossRatio").textContent = winLossRatio.toFixed(2) + ":1";
+      } else {
+        document.getElementById("metricsWinLossRatio").textContent = "--";
+      }
+
+      // Profit Factor
+      if (wins.length > 0 && losses.length > 0) {
+        const grossProfit = wins.reduce((sum, d) => sum + d.change, 0);
+        const grossLoss = Math.abs(losses.reduce((sum, d) => sum + d.change, 0));
+        const profitFactor = grossProfit / grossLoss;
+        const pfEl = document.getElementById("metricsProfitFactor");
+        pfEl.textContent = profitFactor.toFixed(2);
+        pfEl.style.color = profitFactor >= 1.5 ? "#4ade80" : profitFactor >= 1.0 ? "#fbbf24" : "#f97373";
+      } else {
+        document.getElementById("metricsProfitFactor").textContent = "--";
+      }
+
+      // Sharpe Ratio (annualized, assuming risk-free rate = 0)
+      if (dailyChanges.length > 1) {
+        const returns = dailyChanges.map(d => d.changePercent);
+        const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+        const variance = returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length;
+        const stdDev = Math.sqrt(variance);
+        const sharpe = stdDev > 0 ? (avgReturn / stdDev) * Math.sqrt(252) : 0; // Annualized
+        const sharpeEl = document.getElementById("metricsSharpe");
+        sharpeEl.textContent = sharpe.toFixed(2);
+        sharpeEl.style.color = sharpe >= 2.0 ? "#4ade80" : sharpe >= 1.0 ? "#fbbf24" : "#f97373";
+      }
+
+      // Max Drawdown
+      let peak = startingBalance;
+      let maxDrawdown = 0;
+      sorted.forEach(entry => {
+        if (entry.portfolio > peak) peak = entry.portfolio;
+        const drawdown = (peak - entry.portfolio) / peak * 100;
+        if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+      });
+      document.getElementById("metricsMaxDrawdown").textContent = "-" + maxDrawdown.toFixed(2) + "%";
+
+      // Calmar Ratio (Annualized Return / Max Drawdown)
+      if (maxDrawdown > 0 && dailyChanges.length > 0) {
+        const totalDays = dailyChanges.length;
+        const annualizedReturn = (Math.pow(currentBalance / startingBalance, 252 / totalDays) - 1) * 100;
+        const calmar = annualizedReturn / maxDrawdown;
+        const calmarEl = document.getElementById("metricsCalmar");
+        calmarEl.textContent = calmar.toFixed(2);
+        calmarEl.style.color = calmar >= 3.0 ? "#4ade80" : calmar >= 1.0 ? "#fbbf24" : "#f97373";
+      }
+
+      // Recovery Factor
+      if (maxDrawdown > 0) {
+        const recovery = totalPnL / (startingBalance * maxDrawdown / 100);
+        const recoveryEl = document.getElementById("metricsRecovery");
+        recoveryEl.textContent = recovery.toFixed(2);
+        recoveryEl.style.color = recovery >= 2.0 ? "#4ade80" : recovery >= 1.0 ? "#fbbf24" : "#f97373";
+      }
+
+      // Expectancy
+      if (wins.length > 0 && losses.length > 0) {
+        const avgWin = wins.reduce((sum, d) => sum + d.change, 0) / wins.length;
+        const avgLoss = Math.abs(losses.reduce((sum, d) => sum + d.change, 0) / losses.length);
+        const expectancy = (winRate / 100 * avgWin) - ((100 - winRate) / 100 * avgLoss);
+        const expEl = document.getElementById("metricsExpectancy");
+        expEl.textContent = formatMoney(expectancy) + " /trade";
+        expEl.style.color = expectancy > 0 ? "#4ade80" : "#f97373";
+      }
+
+      // Kelly Criterion
+      if (wins.length > 0 && losses.length > 0) {
+        const avgWin = wins.reduce((sum, d) => sum + d.change, 0) / wins.length;
+        const avgLoss = Math.abs(losses.reduce((sum, d) => sum + d.change, 0) / losses.length);
+        const kelly = ((winRate / 100) * avgWin - ((100 - winRate) / 100) * avgLoss) / avgWin * 100;
+        document.getElementById("metricsKelly").textContent = Math.max(0, kelly).toFixed(1) + "%";
+      }
+
+      // Max Consecutive Wins/Losses
+      let currentStreak = 0;
+      let maxWinStreak = 0;
+      let maxLossStreak = 0;
+      let isWinStreak = false;
+
+      dailyChanges.forEach(d => {
+        if (d.change > 0) {
+          if (isWinStreak) {
+            currentStreak++;
+          } else {
+            currentStreak = 1;
+            isWinStreak = true;
+          }
+          maxWinStreak = Math.max(maxWinStreak, currentStreak);
+        } else if (d.change < 0) {
+          if (!isWinStreak) {
+            currentStreak++;
+          } else {
+            currentStreak = 1;
+            isWinStreak = false;
+          }
+          maxLossStreak = Math.max(maxLossStreak, currentStreak);
+        }
+      });
+
+      document.getElementById("metricsMaxWins").textContent = maxWinStreak + " days";
+      document.getElementById("metricsMaxLosses").textContent = maxLossStreak + " days";
+      document.getElementById("metricsDaysTraded").textContent = dailyChanges.length + " days";
+
+      // Check for $400 daily loss warning
+      const todayChange = dailyChanges[dailyChanges.length - 1];
+      if (todayChange && todayChange.change < -400) {
+        document.getElementById("dailyLossWarning").style.display = "block";
+      } else {
+        document.getElementById("dailyLossWarning").style.display = "none";
+      }
+    }
+
+    function displayDailyHistory() {
+      const tbody = document.getElementById("dailyHistoryBody");
+
+      if (dailyPortfolioLog.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--muted);">No portfolio history yet. Set starting balance and log your first day!</td></tr>';
+        return;
+      }
+
+      // Sort by date (newest first for display)
+      const sorted = [...dailyPortfolioLog].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      tbody.innerHTML = "";
+      
+      let prevBalance = startingBalance;
+      let cumulativeGain = 0;
+
+      // Need to calculate from oldest to newest for cumulative
+      const sortedOldest = [...dailyPortfolioLog].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const cumulativeMap = {};
+      
+      sortedOldest.forEach(entry => {
+        const dailyChange = entry.portfolio - prevBalance;
+        cumulativeGain += dailyChange;
+        cumulativeMap[entry.date] = cumulativeGain;
+        prevBalance = entry.portfolio;
+      });
+
+      // Now display newest first
+      prevBalance = startingBalance;
+      const sortedForCalc = [...dailyPortfolioLog].sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      sortedForCalc.forEach((entry, index) => {
+        const dailyChange = entry.portfolio - prevBalance;
+        const dailyPercent = (dailyChange / prevBalance) * 100;
+        const cumulative = cumulativeMap[entry.date];
+        const cumulativePercent = (cumulative / startingBalance) * 100;
+        prevBalance = entry.portfolio;
+      });
+
+      // Display
+      sorted.forEach((entry, displayIndex) => {
+        const actualIndex = dailyPortfolioLog.findIndex(e => e.timestamp === entry.timestamp);
+        
+        // Find previous balance
+        const sortedByDate = [...dailyPortfolioLog].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const entryIndex = sortedByDate.findIndex(e => e.date === entry.date);
+        const prevBal = entryIndex > 0 ? sortedByDate[entryIndex - 1].portfolio : startingBalance;
+        
+        const dailyChange = entry.portfolio - prevBal;
+        const dailyPercent = (dailyChange / prevBal) * 100;
+        const cumulative = cumulativeMap[entry.date];
+        const cumulativePercent = (cumulative / startingBalance) * 100;
+
+        const row = tbody.insertRow();
+        const changeColor = dailyChange >= 0 ? "#4ade80" : "#f97373";
+        const cumColor = cumulative >= 0 ? "#4ade80" : "#f97373";
+
+        row.innerHTML = `
+          <td>${entry.date}</td>
+          <td style="font-weight: 600;">${formatMoney(entry.portfolio)}</td>
+          <td style="color: ${changeColor}; font-weight: 600;">${dailyChange >= 0 ? "+" : ""}${formatMoney(dailyChange)}</td>
+          <td style="color: ${changeColor}; font-weight: 600;">${dailyPercent >= 0 ? "+" : ""}${dailyPercent.toFixed(2)}%</td>
+          <td style="color: ${cumColor}; font-weight: 600;">${formatMoney(cumulative)} (${cumulativePercent >= 0 ? "+" : ""}${cumulativePercent.toFixed(2)}%)</td>
+          <td>
+            <button 
+              class="btn btn-cancel" 
+              style="padding: 3px 8px; font-size: 10px;"
+              onclick="deleteDailyEntry(${actualIndex})"
+            >
+              Delete
+            </button>
+          </td>
+        `;
+      });
+    }
+
+    window.deleteDailyEntry = function(index) {
+      if (confirm("Delete this daily entry?")) {
+        dailyPortfolioLog.splice(index, 1);
+        localStorage.setItem("dailyPortfolioLog", JSON.stringify(dailyPortfolioLog));
+        updateWinLossMetrics();
+      }
+    };
+
     // ========== EXPORT/IMPORT DATA ==========
     const exportDataButton = document.getElementById("exportDataButton");
     const importDataButton = document.getElementById("importDataButton");
@@ -2568,6 +3108,8 @@ Current Trade Details:
       const allData = {
         exportDate: new Date().toISOString(),
         portfolio: portfolioInput.value,
+        startingBalance: startingBalance,
+        dailyPortfolioLog: dailyPortfolioLog,
         savedTrades: savedTrades,
         openPositions: openPositions,
         closedPositions: closedPositions,
@@ -2608,6 +3150,8 @@ Current Trade Details:
           // Confirm before overwriting
           const confirm_msg = `Import data from ${importedData.exportDate || 'unknown date'}?\n\n` +
             `This will load:\n` +
+            `- Starting Balance: ${importedData.startingBalance ? formatMoney(importedData.startingBalance) : 'Not set'}\n` +
+            `- ${importedData.dailyPortfolioLog?.length || 0} Daily Portfolio Entries\n` +
             `- ${importedData.savedTrades?.length || 0} Saved Trades\n` +
             `- ${importedData.openPositions?.length || 0} Open Positions\n` +
             `- ${importedData.closedPositions?.length || 0} Closed Positions\n` +
@@ -2623,6 +3167,16 @@ Current Trade Details:
           if (importedData.portfolio) {
             portfolioInput.value = importedData.portfolio;
             updateMarginAmount();
+          }
+
+          if (importedData.startingBalance) {
+            startingBalance = importedData.startingBalance;
+            localStorage.setItem("startingBalance", startingBalance);
+          }
+
+          if (importedData.dailyPortfolioLog) {
+            dailyPortfolioLog = importedData.dailyPortfolioLog;
+            localStorage.setItem("dailyPortfolioLog", JSON.stringify(dailyPortfolioLog));
           }
 
           if (importedData.savedTrades) {
@@ -2653,6 +3207,7 @@ Current Trade Details:
           displaySavedTrades();
           updatePortfolioTab();
           updateLocateSummary();
+          updateWinLossMetrics();
 
           alert("✅ Data imported successfully! All your trades and positions are loaded.");
           importFileInput.value = "";
@@ -2673,6 +3228,7 @@ Current Trade Details:
     checkDailyReset();
     updatePortfolioTab();
     updateLocateSummary();
+    updateWinLossMetrics();
   </script>
 </body>
 </html>
