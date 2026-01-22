@@ -1514,66 +1514,6 @@ S.s:12601221326176    SXTP    Short    -25    -25    -    LMT    F    DAY    6.0
             </div>
           </div>
         </div>
-
-        <!-- Open Positions -->
-        <div class="card">
-          <div class="card-title-row">
-            <div class="card-title">📥 Import TradeZero Orders</div>
-            <div class="card-note">
-              Paste your inactive orders from TradeZero
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="tradeZeroInput">Paste TradeZero Inactive Orders (Ctrl+V)</label>
-            <textarea
-              id="tradeZeroInput"
-              class="input"
-              rows="8"
-              placeholder="Paste your TradeZero inactive orders here...&#10;Example:&#10;S.s:12601221800457    SXTP    Buy    55    55    -    LMT    F    DAY    4.85    4.85    -    01-22 13:00:45&#10;S.s:12601221739149    SXTP    Short    -25    -    -25    LMT    F    DAY    6.02    6.02    -    01-22 08:26:17"
-              style="font-family: monospace; font-size: 11px; resize: vertical;"
-            ></textarea>
-          </div>
-
-          <div class="actions-row" style="justify-content: flex-start;">
-            <button class="btn btn-execute" id="parseTradeZeroButton">
-              📊 Parse & Import Orders
-            </button>
-            <button class="btn btn-cancel" id="clearTradeZeroButton">
-              🗑️ Clear
-            </button>
-          </div>
-
-          <!-- Preview Table -->
-          <div id="parsedOrdersPreview" style="display: none; margin-top: 16px;">
-            <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #4ade80;">
-              ✅ Parsed Orders (Review before importing):
-            </div>
-            <div style="overflow-x: auto;">
-              <table class="trades-table">
-                <thead>
-                  <tr>
-                    <th>Symbol</th>
-                    <th>Side</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                    <th>Time</th>
-                    <th>Fees (Est)</th>
-                    <th>Import?</th>
-                  </tr>
-                </thead>
-                <tbody id="parsedOrdersBody">
-                </tbody>
-              </table>
-            </div>
-            <div class="actions-row" style="margin-top: 12px;">
-              <button class="btn btn-execute" id="confirmImportButton">
-                ✅ Confirm & Import Selected
-              </button>
-            </div>
-          </div>
-        </div>
-
         <div class="card">
           <div class="card-title-row">
             <div class="card-title">Open Positions</div>
@@ -2674,54 +2614,76 @@ Current Trade Details:
       const orders = [];
 
       lines.forEach(line => {
-        // Only process filled orders (Status = F)
-        if (!line.includes('\tF\t') && !line.includes(' F ')) return;
+        // Skip if doesn't contain 'F' status anywhere (more flexible check)
+        const hasFilledStatus = /\s+F\s+|\tF\t|LMT\s+F\s+|F\s+DAY/.test(line);
+        if (!hasFilledStatus) return;
 
-        // Split by tabs or multiple spaces
-        const cols = line.split(/\t+|\s{2,}/).map(c => c.trim()).filter(c => c);
+        // Split by any whitespace (tabs or spaces)
+        const cols = line.split(/\s+/).filter(c => c.trim());
 
-        let symbol, side, qty, price, time;
+        let symbol, side, execQty, price, time;
 
-        // Extract data from columns
+        // Extract data
         for (let i = 0; i < cols.length; i++) {
           const col = cols[i];
+          const nextCol = cols[i + 1] || '';
 
-          // Symbol (2-5 uppercase letters)
+          // Symbol (2-5 uppercase letters, usually after Ref No.)
           if (/^[A-Z]{2,5}$/.test(col) && !symbol) {
             symbol = col;
             continue;
           }
 
-          // Side
+          // Side (Buy/Short/Sell)
           if (['Buy', 'Short', 'Sell'].includes(col) && !side) {
             side = col;
             continue;
           }
 
-          // Quantity (number, may have - for short)
-          if (/^-?\d+$/.test(col) && symbol && side && !qty) {
-            qty = Math.abs(parseInt(col));
+          // Exec column (filled quantity) - comes after Qty column
+          // Look for number in green (positive for Buy, negative for Short)
+          if (/^-?\d+$/.test(col) && symbol && side) {
+            // This could be Qty or Exec
+            // Exec is the actual filled amount
+            const num = parseInt(col);
+            if (Math.abs(num) > 0 && !execQty) {
+              // Check if next column is also a number (might be Cxl)
+              if (/^-?\d+$/.test(nextCol)) {
+                // This is Qty, next might be Exec
+                const execNum = parseInt(nextCol);
+                if (Math.abs(execNum) > 0) {
+                  execQty = Math.abs(execNum);
+                  i++; // Skip next column
+                }
+              } else {
+                execQty = Math.abs(num);
+              }
+            }
             continue;
           }
 
-          // Price (decimal)
-          if (/^\d+\.\d+$/.test(col) && qty && !price) {
-            price = parseFloat(col);
+          // Price (decimal, between 0.01 and 999999)
+          if (/^\d+\.\d+$/.test(col) && execQty && !price) {
+            const p = parseFloat(col);
+            if (p > 0 && p < 999999) {
+              price = p;
+            }
             continue;
           }
 
-          // Time (HH:MM:SS)
+          // Time (HH:MM:SS format at end)
           if (/\d{2}:\d{2}:\d{2}$/.test(col) && !time) {
-            time = col.split(' ').pop(); // Get just time part
+            time = col;
             continue;
           }
         }
 
-        if (symbol && side && qty && price) {
+        // Validate we have minimum required data
+        if (symbol && side && execQty && execQty > 0 && price && price > 0) {
           orders.push({
             symbol,
             side,
-            qty,
+            qty: execQty,
             price,
             time: time || 'N/A',
             shouldImport: true
