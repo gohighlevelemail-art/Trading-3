@@ -2308,6 +2308,17 @@ function calculateStopLoss() {
     // Recalculate stop loss when portfolio changes
     portfolioInput.addEventListener("input", calculateStopLoss);
 
+    // ========== CUSTOM PRICE CALCULATOR ==========
+    const calculateCustomButton = document.getElementById("calculateCustomButton");
+    const customTargetPriceInput = document.getElementById("customTargetPrice");
+
+    if (calculateCustomButton && customTargetPriceInput) {
+      calculateCustomButton.addEventListener("click", calculateCustomPrice);
+      customTargetPriceInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") calculateCustomPrice();
+      });
+    }
+
     function calculateCustomPrice() {
       if (!currentTradeData || currentTradeData.grossAmount === 0) {
         alert("Please enter trade details in Fee Structure tab first");
@@ -2562,7 +2573,7 @@ function calculateStopLoss() {
     }
 
     function updateDailyPnL() {
-      const today = new Date().toLocaleDateString("en-US");
+      const today = toEstDate(new Date()).toLocaleDateString("en-US");
       
       // Filter today's closed positions
       const todaysClosed = closedPositions.filter(pos => pos.closeDate === today);
@@ -2785,6 +2796,9 @@ function calculateStopLoss() {
         pnl,
         closeDate: est.toLocaleDateString("en-US"),
         closeTime: est.toLocaleTimeString("en-US"),
+        // For Saved Trades table compatibility
+        date: est.toLocaleDateString("en-US"),
+        time: est.toLocaleTimeString("en-US"),
         closeTimestamp: Date.now()
       };
 
@@ -2807,7 +2821,7 @@ function calculateStopLoss() {
 
     function displayClosedPositions() {
       const tbody = document.getElementById("closedPositionsBody");
-      const today = new Date().toLocaleDateString("en-US");
+      const today = toEstDate(new Date()).toLocaleDateString("en-US");
       
       const todaysClosed = closedPositions.filter(pos => pos.closeDate === today);
 
@@ -2844,11 +2858,9 @@ function calculateStopLoss() {
     }
 
     window.deleteClosedPosition = function(timestamp) {
-      alert("Delete function called with timestamp: " + timestamp);
       if (confirm("Delete this closed position? This will also remove it from Saved Trades.")) {
         // Find and remove from closed positions by timestamp
         const closedIndex = closedPositions.findIndex(p => p.closeTimestamp === timestamp);
-        alert("Found at closedIndex: " + closedIndex);
         if (closedIndex !== -1) {
           closedPositions.splice(closedIndex, 1);
           localStorage.setItem("closedPositions", JSON.stringify(closedPositions));
@@ -2862,9 +2874,7 @@ function calculateStopLoss() {
         }
         
         // Update displays
-        alert("About to update portfolio tab");
         updatePortfolioTab();
-        alert("Portfolio tab updated");
       }
     };
 
