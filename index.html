@@ -1069,6 +1069,77 @@
             </div>
           </div>
         </div>
+
+        <!-- Stop Loss Calculator -->
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title">🎯 Stop Loss Calculator</div>
+            <div class="card-note">
+              Set stop loss based on portfolio risk tolerance
+            </div>
+          </div>
+
+          <!-- Risk Profile Selection -->
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px; font-weight: 600;">
+              Risk Profile
+            </div>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 14px; border-radius: 8px; border: 1px solid #1f2937; background: var(--input); transition: 0.15s ease;">
+                <input type="radio" name="riskProfile" value="conservative" id="riskConservative" checked style="cursor: pointer;">
+                <span style="font-size: 13px; color: var(--text);">Conservative (15%)</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 14px; border-radius: 8px; border: 1px solid #1f2937; background: var(--input); transition: 0.15s ease;">
+                <input type="radio" name="riskProfile" value="moderate" id="riskModerate" style="cursor: pointer;">
+                <span style="font-size: 13px; color: var(--text);">Moderate (25%)</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px 14px; border-radius: 8px; border: 1px solid #1f2937; background: var(--input); transition: 0.15s ease;">
+                <input type="radio" name="riskProfile" value="aggressive" id="riskAggressive" style="cursor: pointer;">
+                <span style="font-size: 13px; color: var(--text);">Aggressive (35%)</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Stop Loss Results -->
+          <div class="fees-card">
+            <div class="fees-header">
+              <div class="fees-title">Stop Loss Levels</div>
+              <div class="fees-body" style="font-size: 11px;">
+                Maximum loss allowed based on portfolio risk
+              </div>
+            </div>
+            <div class="fees-body">
+              <div class="fee-row">
+                <div class="fee-name">Portfolio Value</div>
+                <div class="fee-value" id="slPortfolio">$0.00</div>
+              </div>
+              <div class="fee-row">
+                <div class="fee-name">Risk Profile</div>
+                <div class="fee-value" id="slRiskProfile">Conservative</div>
+              </div>
+              <div class="fee-row">
+                <div class="fee-name">Max Loss Allowed</div>
+                <div class="fee-value" id="slMaxLoss" style="color: #f97373;">$0.00</div>
+              </div>
+
+              <div class="fee-total" style="margin-top: 12px; padding-top: 12px;">
+                <div class="fee-total-label">Stop Loss Price</div>
+                <div class="fee-total-value" id="slStopPrice" style="color: #f97373;">--</div>
+              </div>
+
+              <div class="net-row">
+                <div class="net-label">Price Movement</div>
+                <div class="net-value" id="slPriceMovement">--</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Warning Message -->
+          <div id="slWarning" style="display: none; margin-top: 12px; padding: 10px 12px; background: rgba(249, 115, 115, 0.1); border: 1px solid #f97373; border-radius: 8px; color: #f97373; font-size: 12px;">
+            ⚠️ <span id="slWarningText"></span>
+          </div>
+        </div>
+
       </div>
 
       <!-- SAVED TRADES TAB -->
@@ -1966,6 +2037,7 @@
       }
 
       generateProfitTable();
+      calculateStopLoss();
     }
 
     function updateGauge(percentage) {
@@ -1988,6 +2060,7 @@
       const tbody = document.getElementById("profitTableBody");
       tbody.innerHTML =
         '<tr><td colspan="3" style="text-align: center; color: var(--muted);">No trade data yet</td></tr>';
+      calculateStopLoss();
     }
 
     function generateProfitTable() {
@@ -2094,6 +2167,114 @@
       }
     }
 
+    // ========== STOP LOSS CALCULATOR ==========
+    function calculateStopLoss() {
+      if (!currentTradeData || currentTradeData.netAmount === 0) {
+        // Clear stop loss display
+        document.getElementById("slPortfolio").textContent = "$0.00";
+        document.getElementById("slRiskProfile").textContent = "Conservative";
+        document.getElementById("slMaxLoss").textContent = "$0.00";
+        document.getElementById("slStopPrice").textContent = "--";
+        document.getElementById("slPriceMovement").textContent = "--";
+        document.getElementById("slWarning").style.display = "none";
+        return;
+      }
+
+      // Get portfolio value (NOT margin)
+      const portfolioValue = portfolioInput.value.replace(/[$,]/g, "");
+      const portfolio = parseFloat(portfolioValue) || 0;
+
+      if (portfolio === 0) {
+        document.getElementById("slPortfolio").textContent = "$0.00";
+        document.getElementById("slWarning").style.display = "block";
+        document.getElementById("slWarningText").textContent = "Please enter your portfolio value first.";
+        return;
+      }
+
+      // Get selected risk profile
+      let riskPercent = 15; // Default conservative
+      let profileName = "Conservative";
+
+      if (document.getElementById("riskModerate").checked) {
+        riskPercent = 25;
+        profileName = "Moderate";
+      } else if (document.getElementById("riskAggressive").checked) {
+        riskPercent = 35;
+        profileName = "Aggressive";
+      }
+
+      // Calculate maximum loss allowed
+      const maxLossAllowed = portfolio * (riskPercent / 100);
+
+      // Get trade data
+      const entryPrice = currentTradeData.price;
+      const shares = currentTradeData.shares;
+      const side = currentTradeData.side;
+      const totalFees = currentTradeData.totalFees;
+
+      // Calculate stop loss price
+      // Formula: We need to find the price where (loss on position + fees) = maxLossAllowed
+      let stopLossPrice = 0;
+      let priceMovement = 0;
+      let priceMovementPercent = 0;
+
+      if (side === "long") {
+        // For LONG: Stop loss is BELOW entry price
+        // Loss = (entryPrice - stopPrice) * shares + totalFees
+        // Solve for stopPrice: stopPrice = entryPrice - ((maxLossAllowed - totalFees) / shares)
+        stopLossPrice = entryPrice - ((maxLossAllowed - totalFees) / shares);
+        priceMovement = entryPrice - stopLossPrice;
+        priceMovementPercent = (priceMovement / entryPrice) * 100;
+      } else {
+        // For SHORT: Stop loss is ABOVE entry price
+        // Loss = (stopPrice - entryPrice) * shares + totalFees
+        // Solve for stopPrice: stopPrice = entryPrice + ((maxLossAllowed - totalFees) / shares)
+        stopLossPrice = entryPrice + ((maxLossAllowed - totalFees) / shares);
+        priceMovement = stopLossPrice - entryPrice;
+        priceMovementPercent = (priceMovement / entryPrice) * 100;
+      }
+
+      // Update display
+      document.getElementById("slPortfolio").textContent = formatMoney(portfolio);
+      document.getElementById("slRiskProfile").textContent = profileName + " (" + riskPercent + "%)";
+      document.getElementById("slMaxLoss").textContent = formatMoney(maxLossAllowed);
+      document.getElementById("slStopPrice").textContent = "$" + stopLossPrice.toFixed(3);
+
+      const movementEl = document.getElementById("slPriceMovement");
+      if (side === "long") {
+        movementEl.textContent = "-$" + priceMovement.toFixed(3) + " (-" + priceMovementPercent.toFixed(2) + "%)";
+      } else {
+        movementEl.textContent = "+$" + priceMovement.toFixed(3) + " (+" + priceMovementPercent.toFixed(2) + "%)";
+      }
+      movementEl.style.color = "#f97373";
+
+      // Check if stop loss is reasonable
+      const positionSize = currentTradeData.netAmount;
+      const riskToPositionRatio = (maxLossAllowed / positionSize) * 100;
+
+      if (stopLossPrice <= 0) {
+        document.getElementById("slWarning").style.display = "block";
+        document.getElementById("slWarningText").textContent =
+          "Stop loss price is invalid. Your position size may be too large for this risk profile.";
+      } else if (side === "short" && stopLossPrice < entryPrice) {
+        document.getElementById("slWarning").style.display = "block";
+        document.getElementById("slWarningText").textContent =
+          "Invalid short stop loss: stop price must be ABOVE entry price.";
+      } else if (side === "long" && stopLossPrice > entryPrice) {
+        document.getElementById("slWarning").style.display = "block";
+        document.getElementById("slWarningText").textContent =
+          "Invalid long stop loss: stop price must be BELOW entry price.";
+      } else if (riskToPositionRatio > 100) {
+        document.getElementById("slWarning").style.display = "block";
+        document.getElementById("slWarningText").textContent =
+          "Your allowed risk (" + formatMoney(maxLossAllowed) + ") exceeds your total position cost (" + formatMoney(positionSize) + "). Consider a larger risk profile or smaller position.";
+      } else {
+        document.getElementById("slWarning").style.display = "none";
+      }
+    }
+
+
+
     // ========== CUSTOM PRICE CALCULATOR ==========
     const calculateCustomButton = document.getElementById("calculateCustomButton");
     const customTargetPriceInput = document.getElementById("customTargetPrice");
@@ -2103,7 +2284,17 @@
       if (e.key === "Enter") {
         calculateCustomPrice();
       }
-    });
+    }
+
+
+    // ========== STOP LOSS EVENT LISTENERS ==========
+    document.getElementById("riskConservative").addEventListener("change", calculateStopLoss);
+    document.getElementById("riskModerate").addEventListener("change", calculateStopLoss);
+    document.getElementById("riskAggressive").addEventListener("change", calculateStopLoss);
+
+    // Recalculate stop loss when portfolio changes
+    portfolioInput.addEventListener("input", calculateStopLoss);
+);
 
     function calculateCustomPrice() {
       if (!currentTradeData || currentTradeData.grossAmount === 0) {
@@ -3158,6 +3349,7 @@
     updatePortfolioTab();
     updateLocateSummary();
     updateWinLossMetrics();
+    calculateStopLoss();
   </script>
 </body>
 </html>
