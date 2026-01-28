@@ -743,11 +743,6 @@
         <span class="tab-icon">💰</span>
         Locate Fees
       </button>
-<button class="tab-button" data-tab="average">
-  <span class="tab-icon">📊</span>
-  Average Price
-</button>
-
       <button class="tab-button" data-tab="portfolio">
         <span class="tab-icon">📈</span>
         Current Portfolio
@@ -983,7 +978,7 @@
 
           <div class="risk-grid">
             <div>
-              <div class="risk-item-label">Margin Portfolio</div>
+              <div class="risk-item-label">Portfolio Value</div>
               <div class="risk-item-value" id="riskMargin">$0.00</div>
             </div>
             <div>
@@ -1479,101 +1474,7 @@
         </div>
       </div>
 
-      
-
-
-<!-- AVERAGE PRICE TAB -->
-<div class="tab-panel" id="tab-average">
-  <div class="card">
-    <div class="card-title-row">
-      <div class="card-title">Average Price Calculator</div>
-      <div class="card-note">
-        Calculate average share price across multiple orders
-      </div>
-    </div>
-
-    <!-- Initial Position -->
-    <div style="margin-bottom: 20px;">
-      <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px;">
-        Initial Position
-      </div>
-      <div class="grid-2">
-        <div class="field">
-          <label for="avgInitialUnits">Initial Units (Shares)</label>
-          <input
-            id="avgInitialUnits"
-            class="input"
-            type="number"
-            step="1"
-            min="0"
-            placeholder="e.g. 100"
-          />
-        </div>
-        <div class="field">
-          <label for="avgInitialPrice">Initial Price per Share</label>
-          <input
-            id="avgInitialPrice"
-            class="input"
-            type="number"
-            step="0.001"
-            min="0"
-            placeholder="e.g. 50.00"
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- Additional Orders Section -->
-    <div style="margin-bottom: 20px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <div style="font-size: 13px; font-weight: 600; color: var(--text);">
-          Additional Orders
-        </div>
-        <button class="btn btn-execute" id="addOrderButton" style="padding: 5px 12px; font-size: 11px;">
-          + Add Order
-        </button>
-      </div>
-
-      <!-- Additional Orders Container -->
-      <div id="additionalOrdersContainer"></div>
-    </div>
-
-    <!-- Results Card -->
-    <div class="fees-card">
-      <div class="fees-header">
-        <div class="fees-title">Average Position Summary</div>
-      </div>
-      <div class="fees-body">
-        <div class="fee-row">
-          <div class="fee-name">Total Units</div>
-          <div class="fee-value" id="avgTotalUnits">0</div>
-        </div>
-        <div class="fee-row">
-          <div class="fee-name">Average Price per Share</div>
-          <div class="fee-value" id="avgAveragePrice">$0.000</div>
-        </div>
-
-        <div class="fee-total">
-          <div class="fee-total-label">Total Cost</div>
-          <div class="fee-total-value" id="avgTotalCost">$0.00</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="actions-row">
-      <button class="btn btn-cancel" id="avgResetButton">
-        🔄 Reset All
-      </button>
-      <button class="btn btn-execute" id="avgCalculateButton">
-        Calculate Average
-      </button>
-    </div>
-  </div>
-</div>
-
-
-<!-- CURRENT PORTFOLIO TAB -->
+      <!-- CURRENT PORTFOLIO TAB -->
       <div class="tab-panel" id="tab-portfolio">
         <!-- Daily P&L Summary -->
         <div class="card" style="margin-bottom: 16px;">
@@ -1696,8 +1597,6 @@
     let locateEntries = JSON.parse(localStorage.getItem("locateEntries")) || [];
     let startingBalance = parseFloat(localStorage.getItem("startingBalance")) || null;
     let dailyPortfolioLog = JSON.parse(localStorage.getItem("dailyPortfolioLog")) || [];
-let additionalOrders = [];
-let orderCounter = 0;
 
     // ========== UTILITIES ==========
     function formatMoney(value) {
@@ -1806,7 +1705,6 @@ let orderCounter = 0;
       risk: document.getElementById("tab-risk"),
       winloss: document.getElementById("tab-winloss"),
       locate: document.getElementById("tab-locate"),
-      average: document.getElementById("tab-average"),
       portfolio: document.getElementById("tab-portfolio"),
       saved: document.getElementById("tab-saved"),
     };
@@ -2114,15 +2012,15 @@ let orderCounter = 0;
         return;
       }
 
-      const marginText = marginAmount.textContent.replace(/[$,]/g, "");
-      const margin = parseFloat(marginText) || 0;
+      const portfolioValue = portfolioInput.value.replace(/[$,]/g, "");
+  const portfolio = parseFloat(portfolioValue) || 0;
       const net = currentTradeData.netAmount;
 
-      document.getElementById("riskMargin").textContent = formatMoney(margin);
+      document.getElementById("riskMargin").textContent = formatMoney(portfolio);
       document.getElementById("riskNet").textContent = formatMoney(net);
       document.getElementById("riskSide").textContent = currentTradeData.side.toUpperCase();
 
-      const riskPercent = margin > 0 ? (net / margin) * 100 : 0;
+      const riskPercent = portfolio > 0 ? (net / portfolio) * 100 : 0;
       document.getElementById("riskPercent").textContent = Math.round(riskPercent) + "%";
 
       updateGauge(riskPercent);
@@ -3465,137 +3363,6 @@ function calculateStopLoss() {
       reader.readAsText(file);
     });
 
-    
-    // ========== AVERAGE PRICE CALCULATOR ==========
-    function addOrderRow() {
-      orderCounter++;
-      const orderDiv = document.createElement('div');
-      orderDiv.id = `order-${orderCounter}`;
-      orderDiv.style.cssText = `
-        display: grid;
-        grid-template-columns: 1fr 1fr auto;
-        gap: 12px;
-        margin-bottom: 12px;
-        padding: 12px;
-        background: rgba(15, 23, 42, 0.5);
-        border-radius: 8px;
-        border: 1px solid #1f2937;
-      `;
-
-      orderDiv.innerHTML = `
-        <div class="field">
-          <label for="avgUnits${orderCounter}">Units</label>
-          <input
-            id="avgUnits${orderCounter}"
-            class="input"
-            type="number"
-            step="1"
-            min="0"
-            placeholder="e.g. 50"
-            style="padding: 6px 8px; font-size: 12px;"
-          />
-        </div>
-        <div class="field">
-          <label for="avgPrice${orderCounter}">Price per Share</label>
-          <input
-            id="avgPrice${orderCounter}"
-            class="input"
-            type="number"
-            step="0.001"
-            min="0"
-            placeholder="e.g. 45.00"
-            style="padding: 6px 8px; font-size: 12px;"
-          />
-        </div>
-        <div style="display: flex; align-items: flex-end;">
-          <button 
-            class="btn btn-cancel" 
-            onclick="removeOrder(${orderCounter})"
-            style="padding: 6px 10px; font-size: 11px; white-space: nowrap;"
-          >
-            Remove
-          </button>
-        </div>
-      `;
-
-      document.getElementById('additionalOrdersContainer').appendChild(orderDiv);
-      additionalOrders.push(orderCounter);
-
-      // Auto-calculate when new inputs change
-      const unitsInput = document.getElementById(`avgUnits${orderCounter}`);
-      const priceInput = document.getElementById(`avgPrice${orderCounter}`);
-      unitsInput.addEventListener('input', calculateAveragePrice);
-      priceInput.addEventListener('input', calculateAveragePrice);
-
-      // Calculate once immediately
-      calculateAveragePrice();
-    }
-
-    window.removeOrder = function(orderId) {
-      const orderDiv = document.getElementById(`order-${orderId}`);
-      if (orderDiv) {
-        orderDiv.remove();
-      }
-      additionalOrders = additionalOrders.filter(id => id !== orderId);
-      calculateAveragePrice();
-    };
-
-    function calculateAveragePrice() {
-      const initialUnits = parseFloat(document.getElementById('avgInitialUnits').value) || 0;
-      const initialPrice = parseFloat(document.getElementById('avgInitialPrice').value) || 0;
-
-      // If initial position isn't set, clear output (still allows building rows)
-      if (initialUnits === 0 || initialPrice === 0) {
-        document.getElementById('avgTotalUnits').textContent = '0';
-        document.getElementById('avgAveragePrice').textContent = '$0.000';
-        document.getElementById('avgTotalCost').textContent = '$0.00';
-        return;
-      }
-
-      let totalUnits = initialUnits;
-      let totalCost = initialUnits * initialPrice;
-
-      additionalOrders.forEach(orderId => {
-        const unitsInput = document.getElementById(`avgUnits${orderId}`);
-        const priceInput = document.getElementById(`avgPrice${orderId}`);
-
-        if (unitsInput && priceInput) {
-          const units = parseFloat(unitsInput.value) || 0;
-          const price = parseFloat(priceInput.value) || 0;
-
-          if (units > 0 && price > 0) {
-            totalUnits += units;
-            totalCost += units * price;
-          }
-        }
-      });
-
-      const averagePrice = totalCost / totalUnits;
-
-      document.getElementById('avgTotalUnits').textContent = totalUnits.toFixed(0);
-      document.getElementById('avgAveragePrice').textContent = '$' + averagePrice.toFixed(3);
-      document.getElementById('avgTotalCost').textContent = formatMoney(totalCost);
-    }
-
-    function resetAverageCalculator() {
-      document.getElementById('avgInitialUnits').value = '';
-      document.getElementById('avgInitialPrice').value = '';
-      document.getElementById('additionalOrdersContainer').innerHTML = '';
-      additionalOrders = [];
-      orderCounter = 0;
-      calculateAveragePrice();
-    }
-
-
-    
-    // ========== AVERAGE PRICE EVENT LISTENERS ==========
-    document.getElementById('addOrderButton').addEventListener('click', addOrderRow);
-    document.getElementById('avgCalculateButton').addEventListener('click', calculateAveragePrice);
-    document.getElementById('avgResetButton').addEventListener('click', resetAverageCalculator);
-    document.getElementById('avgInitialUnits').addEventListener('input', calculateAveragePrice);
-    document.getElementById('avgInitialPrice').addEventListener('input', calculateAveragePrice);
-
-
     // ========== INIT ==========
     updateLocateVisibility();
     calculate();
@@ -3605,7 +3372,6 @@ function calculateStopLoss() {
     updateLocateSummary();
     updateWinLossMetrics();
     calculateStopLoss();
-    calculateAveragePrice();
   </script>
 </body>
 </html>
