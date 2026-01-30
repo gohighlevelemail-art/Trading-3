@@ -3398,7 +3398,12 @@ dailyPortfolioInput.value = "";
       const cumulativeMap = {};
       
       sortedOldest.forEach(entry => {
-        const dailyChange = entry.portfolio - prevBalance;
+        // Get withdrawals for this date
+        const withdrawalsToday = withdrawalLog.filter(w => w.date === entry.date);
+        const withdrawnToday = withdrawalsToday.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
+        
+        // Daily change should include withdrawals (since portfolio value decreased by withdrawal amount)
+        const dailyChange = (entry.portfolio - prevBalance) + withdrawnToday;
         cumulativeGain += dailyChange;
         cumulativeMap[entry.date] = cumulativeGain;
         prevBalance = entry.portfolio;
@@ -3425,7 +3430,12 @@ dailyPortfolioInput.value = "";
         const entryIndex = sortedByDate.findIndex(e => e.date === entry.date);
         const prevBal = entryIndex > 0 ? sortedByDate[entryIndex - 1].portfolio : startingBalance;
         
-        const dailyChange = entry.portfolio - prevBal;
+        // Get withdrawals for this date
+        const withdrawalsToday = withdrawalLog.filter(w => w.date === entry.date);
+        const withdrawnToday = withdrawalsToday.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
+        
+        // Daily change includes withdrawals
+        const dailyChange = (entry.portfolio - prevBal) + withdrawnToday;
         const dailyPercent = (dailyChange / prevBal) * 100;
         const cumulative = cumulativeMap[entry.date];
         const cumulativePercent = (cumulative / startingBalance) * 100;
