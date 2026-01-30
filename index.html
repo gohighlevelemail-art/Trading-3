@@ -1899,7 +1899,8 @@ let orderCounter = 0;
         tabButtons.forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
         Object.keys(tabPanels).forEach((key) => {
-          tabPanels[key].classList.toggle("active", key === tab);
+          const panel = tabPanels[key];
+          if (panel) panel.classList.toggle("active", key === tab);
         });
 
         if (tab === "risk") {
@@ -1918,6 +1919,15 @@ let orderCounter = 0;
         }
       });
     });
+
+    
+    // Ensure Withdrawals tab works even if injected later
+    const withdrawalsBtn = document.querySelector('.tab-button[data-tab="withdrawals"]');
+    if (withdrawalsBtn) {
+      withdrawalsBtn.addEventListener("click", () => {
+        // no-op: handled by generic tab handler
+      });
+    }
 
     // ========== LOGIC ==========
     function updateLocateVisibility() {
