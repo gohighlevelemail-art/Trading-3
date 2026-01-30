@@ -3115,7 +3115,6 @@ function calculateStopLoss() {
     logDailyPortfolioButton.addEventListener("click", () => {
       if (!startingBalance) {
         alert("Please set your starting balance first!");
-    if (logWithdrawalButton) logWithdrawalButton.addEventListener("click", logWithdrawal);
 
         return;
       }
@@ -3154,6 +3153,11 @@ dailyPortfolioInput.value = "";
       updateWinLossMetrics();
     updateTotalWithdrawn();
     });
+
+    // Withdrawal button event listener
+    if (logWithdrawalButton) {
+      logWithdrawalButton.addEventListener("click", logWithdrawal);
+    }
 
     function updateWinLossMetrics() {
       // Update starting balance display
