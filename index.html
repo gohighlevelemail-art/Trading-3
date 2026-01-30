@@ -3204,7 +3204,9 @@ dailyPortfolioInput.value = "";
       const currentBalance = sorted[sorted.length - 1].portfolio;
       const totalWithdrawals = withdrawalLog.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
       const truePortfolioValue = currentBalance + totalWithdrawals;
-      const totalPnL = truePortfolioValue - startingBalance;
+      
+      // Total P&L is ONLY from trading (current balance vs starting)
+      const totalPnL = currentBalance - startingBalance;
       const totalPnLPercent = (totalPnL / startingBalance) * 100;
 
       // Calculate daily changes
