@@ -1914,6 +1914,7 @@ let orderCounter = 0;
         } else if (tab === "winloss") {
           updateWinLossMetrics();
     updateTotalWithdrawn();
+    updateWithdrawalsTab();
         } else if (tab === "withdrawals") {
           updateWithdrawalsTab();
         }
@@ -3109,6 +3110,7 @@ function calculateStopLoss() {
       alert("✅ Starting balance set to " + formatMoney(balance));
       updateWinLossMetrics();
     updateTotalWithdrawn();
+    updateWithdrawalsTab();
     });
 
     // Log daily portfolio
@@ -3152,6 +3154,7 @@ function calculateStopLoss() {
 dailyPortfolioInput.value = "";
       updateWinLossMetrics();
     updateTotalWithdrawn();
+    updateWithdrawalsTab();
     });
 
     // Withdrawal button event listener
@@ -3175,6 +3178,7 @@ dailyPortfolioInput.value = "";
         document.getElementById("metricsStarting").textContent = startingBalance ? formatMoney(startingBalance) : "$0.00";
         document.getElementById("metricsCurrent").textContent = "$0.00";
         const tw = updateTotalWithdrawn();
+    updateWithdrawalsTab();
         const mtw = document.getElementById("metricsWithdrawn");
         const mtv = document.getElementById("metricsTrueValue");
         if (mtw) mtw.textContent = formatMoney(tw);
@@ -3414,11 +3418,8 @@ dailyPortfolioInput.value = "";
       sortedForCalc.forEach((entry, index) => {
         const dailyChange = entry.portfolio - prevBalance;
         const dailyPercent = (dailyChange / prevBalance) * 100;
-        // Cumulative includes all withdrawals up to this date
-        const withdrawalsUpToDate = withdrawalLog
-          .filter(w => new Date(w.date) <= new Date(entry.date))
-          .reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
-        const cumulative = cumulativeMap[entry.date] + withdrawalsUpToDate;
+        // Cumulative is just trading gains (no withdrawals)
+        const cumulative = cumulativeMap[entry.date];
         const cumulativePercent = (cumulative / startingBalance) * 100;
         prevBalance = entry.portfolio;
       });
@@ -3435,11 +3436,8 @@ dailyPortfolioInput.value = "";
         // Daily change: simple comparison
         const dailyChange = entry.portfolio - prevBal;
         const dailyPercent = (dailyChange / prevBal) * 100;
-        // Cumulative includes all withdrawals up to this date
-        const withdrawalsUpToDate = withdrawalLog
-          .filter(w => new Date(w.date) <= new Date(entry.date))
-          .reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
-        const cumulative = cumulativeMap[entry.date] + withdrawalsUpToDate;
+        // Cumulative is just trading gains (no withdrawals)
+        const cumulative = cumulativeMap[entry.date];
         const cumulativePercent = (cumulative / startingBalance) * 100;
 
         const row = tbody.insertRow();
@@ -3471,6 +3469,7 @@ dailyPortfolioInput.value = "";
         localStorage.setItem("dailyPortfolioLog", JSON.stringify(dailyPortfolioLog));
         updateWinLossMetrics();
     updateTotalWithdrawn();
+    updateWithdrawalsTab();
       }
     };
 
@@ -3586,6 +3585,7 @@ dailyPortfolioInput.value = "";
           updateLocateSummary();
           updateWinLossMetrics();
     updateTotalWithdrawn();
+    updateWithdrawalsTab();
 
           alert("✅ Data imported successfully! All your trades and positions are loaded.");
           importFileInput.value = "";
@@ -3762,9 +3762,11 @@ function logWithdrawal() {
   document.getElementById("withdrawalNotes").value = "";
 
   updateTotalWithdrawn();
+    updateWithdrawalsTab();
   updateWithdrawalsTab();
   updateWinLossMetrics();
     updateTotalWithdrawn();
+    updateWithdrawalsTab();
   alert("✅ Withdrawal logged");
 }
 
@@ -3829,9 +3831,11 @@ window.deleteWithdrawal = function(timestamp) {
       withdrawalLog.splice(index, 1);
       localStorage.setItem("withdrawalLog", JSON.stringify(withdrawalLog));
       updateTotalWithdrawn();
+    updateWithdrawalsTab();
       updateWithdrawalsTab();
       updateWinLossMetrics();
     updateTotalWithdrawn();
+    updateWithdrawalsTab();
     }
   }
 };
@@ -3845,6 +3849,7 @@ window.deleteWithdrawal = function(timestamp) {
     updateLocateSummary();
     updateWinLossMetrics();
     updateTotalWithdrawn();
+    updateWithdrawalsTab();
     calculateStopLoss();
     calculateAveragePrice();
   </script>
