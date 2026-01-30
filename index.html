@@ -1170,6 +1170,32 @@
             </div>
           </div>
 
+<table class="trades-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Symbol</th>
+                <th>Side</th>
+                <th>Type</th>
+                <th>Price</th>
+                <th>Shares</th>
+                <th>Fees</th>
+                <th>Net</th>
+              </tr>
+            </thead>
+            <tbody id="savedTradesBody">
+              <tr>
+                <td colspan="9" style="text-align: center; color: var(--muted);">
+                  No saved trades yet
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      
 <!-- WITHDRAWALS TAB -->
 <div class="tab-panel" id="tab-withdrawals">
   <div class="card">
@@ -1213,32 +1239,8 @@
   </div>
 </div>
 
-          <table class="trades-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Time</th>
-                <th>Symbol</th>
-                <th>Side</th>
-                <th>Type</th>
-                <th>Price</th>
-                <th>Shares</th>
-                <th>Fees</th>
-                <th>Net</th>
-              </tr>
-            </thead>
-            <tbody id="savedTradesBody">
-              <tr>
-                <td colspan="9" style="text-align: center; color: var(--muted);">
-                  No saved trades yet
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- WIN/LOSS TAB -->
+          
+<!-- WIN/LOSS TAB -->
       <div class="tab-panel" id="tab-winloss">
         <!-- Starting Balance Setup -->
         <div class="card">
@@ -3778,10 +3780,19 @@ function updateTotalWithdrawn() {
 }
 
 function updateWithdrawalsTab() {
+  console.log("updateWithdrawalsTab called");
+  console.log("withdrawalLog:", withdrawalLog);
+  
   const tbody = document.getElementById("withdrawalsTableBody");
-  if (!tbody) return;
+  if (!tbody) {
+    console.log("ERROR: withdrawalsTableBody not found!");
+    return;
+  }
+  
+  console.log("withdrawalsTableBody found, length:", withdrawalLog ? withdrawalLog.length : 0);
 
   if (!withdrawalLog || withdrawalLog.length === 0) {
+    console.log("No withdrawals in log");
     tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--muted);">No withdrawals yet</td></tr>';
     const z = "$0.00";
     const el1 = document.getElementById("summaryTotalWithdrawals");
@@ -3795,8 +3806,12 @@ function updateWithdrawalsTab() {
     return;
   }
 
+  console.log("Has withdrawals, displaying...");
   const sorted = [...withdrawalLog].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   const total = withdrawalLog.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
+  
+  console.log("Sorted withdrawals:", sorted);
+  console.log("Total:", total);
 
   tbody.innerHTML = "";
   sorted.forEach((w) => {
