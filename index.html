@@ -756,7 +756,11 @@
         <span class="tab-icon">💾</span>
         Saved Trades
       </button>
-    </div>
+    <button class="tab-button" data-tab="withdrawals">
+  <span class="tab-icon">💸</span>
+  Withdrawals
+</button>
+</div>
 
     <div class="content">
       <!-- FEE STRUCTURE TAB -->
@@ -1165,6 +1169,50 @@
               Stored locally in your browser.
             </div>
           </div>
+
+<!-- WITHDRAWALS TAB -->
+<div class="tab-panel" id="tab-withdrawals">
+  <div class="card">
+    <div class="card-title-row">
+      <div class="card-title">Withdrawal History</div>
+      <div class="card-note">Track profit withdrawals</div>
+    </div>
+
+    <!-- Summary -->
+    <div class="fees-card" style="margin-bottom: 16px;">
+      <div class="fees-header"><div class="fees-title">Summary</div></div>
+      <div class="fees-body">
+        <div class="fee-row">
+          <div class="fee-name">Total Withdrawals</div>
+          <div class="fee-value" id="summaryTotalWithdrawals" style="color: #f97373;">$0.00</div>
+        </div>
+        <div class="fee-row">
+          <div class="fee-name">Count</div>
+          <div class="fee-value" id="summaryWithdrawalCount">0</div>
+        </div>
+        <div class="fee-row">
+          <div class="fee-name">Average</div>
+          <div class="fee-value" id="summaryAvgWithdrawal">$0.00</div>
+        </div>
+        <div class="fee-total">
+          <div class="fee-total-label">Largest</div>
+          <div class="fee-total-value" id="summaryLargestWithdrawal">$0.00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <table class="trades-table">
+      <thead>
+        <tr><th>Date</th><th>Time</th><th>Amount</th><th>Before</th><th>After</th><th>Notes</th><th>Action</th></tr>
+      </thead>
+      <tbody id="withdrawalsTableBody">
+        <tr><td colspan="7" style="text-align: center; color: var(--muted);">No withdrawals yet</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
           <table class="trades-table">
             <thead>
               <tr>
@@ -1244,6 +1292,29 @@
             <button class="btn btn-execute" id="logDailyPortfolioButton" style="height: fit-content;">
               Log Today
             </button>
+<!-- Withdrawal Logger -->
+<div style="border-top: 1px dashed rgba(55, 65, 81, 0.8); padding-top: 16px; margin-top: 16px;">
+  <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px;">
+    💸 Log Withdrawal
+  </div>
+  <div style="display: grid; grid-template-columns: 1fr 2fr auto; gap: 12px; align-items: end;">
+    <div class="field">
+      <label for="withdrawalAmount">Withdrawal Amount</label>
+      <input id="withdrawalAmount" class="input" type="number" step="0.01" placeholder="e.g. 124.70"/>
+    </div>
+    <div class="field">
+      <label for="withdrawalNotes">Notes (Optional)</label>
+      <input id="withdrawalNotes" class="input" type="text" placeholder="Profit withdrawal"/>
+    </div>
+    <button class="btn btn-cancel" id="logWithdrawalButton" style="height: fit-content;">
+      Log Withdrawal
+    </button>
+  </div>
+  <div style="margin-top: 8px; font-size: 12px; color: var(--muted);">
+    Total Withdrawn: <span id="totalWithdrawn" style="color: #f97373; font-weight: 600;">$0.00</span>
+  </div>
+</div>
+
           </div>
         </div>
 
@@ -1265,6 +1336,15 @@
               <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Total Gain/Loss</div>
               <div id="metricsTotalPnL" style="font-size: 18px; font-weight: 700; color: var(--muted);">$0.00 (0%)</div>
             </div>
+
+<div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+  <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">Total Withdrawn</div>
+  <div id="metricsWithdrawn" style="font-size: 18px; font-weight: 700; color: #fbbf24;">$0.00</div>
+</div>
+<div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
+  <div style="font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px;">True Portfolio Value</div>
+  <div id="metricsTrueValue" style="font-size: 18px; font-weight: 700; color: #4ade80;">$0.00</div>
+</div>
 
             <!-- Row 2: Daily Metrics -->
             <div style="padding: 12px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border: 1px solid #1f2937;">
@@ -1696,6 +1776,7 @@
     let locateEntries = JSON.parse(localStorage.getItem("locateEntries")) || [];
     let startingBalance = parseFloat(localStorage.getItem("startingBalance")) || null;
     let dailyPortfolioLog = JSON.parse(localStorage.getItem("dailyPortfolioLog")) || [];
+let withdrawalLog = JSON.parse(localStorage.getItem("withdrawalLog")) || [];
 let additionalOrders = [];
 let orderCounter = 0;
 
@@ -1809,6 +1890,7 @@ let orderCounter = 0;
       average: document.getElementById("tab-average"),
       portfolio: document.getElementById("tab-portfolio"),
       saved: document.getElementById("tab-saved"),
+      withdrawals: document.getElementById("tab-withdrawals"),
     };
 
     tabButtons.forEach((btn) => {
@@ -1830,6 +1912,9 @@ let orderCounter = 0;
           updateLocateSummary();
         } else if (tab === "winloss") {
           updateWinLossMetrics();
+    updateTotalWithdrawn();
+        } else if (tab === "withdrawals") {
+          updateWithdrawalsTab();
         }
       });
     });
@@ -2996,6 +3081,9 @@ function calculateStopLoss() {
     const startingBalanceInput = document.getElementById("startingBalanceInput");
     const logDailyPortfolioButton = document.getElementById("logDailyPortfolioButton");
     const dailyPortfolioInput = document.getElementById("dailyPortfolioInput");
+    const logWithdrawalButton = document.getElementById("logWithdrawalButton");
+    const withdrawalAmount = document.getElementById("withdrawalAmount");
+    const withdrawalNotes = document.getElementById("withdrawalNotes");
 
     // Set starting balance
     setStartingBalanceButton.addEventListener("click", () => {
@@ -3010,12 +3098,15 @@ function calculateStopLoss() {
       document.getElementById("currentStartingBalance").textContent = formatMoney(balance);
       alert("✅ Starting balance set to " + formatMoney(balance));
       updateWinLossMetrics();
+    updateTotalWithdrawn();
     });
 
     // Log daily portfolio
     logDailyPortfolioButton.addEventListener("click", () => {
       if (!startingBalance) {
         alert("Please set your starting balance first!");
+    if (logWithdrawalButton) logWithdrawalButton.addEventListener("click", logWithdrawal);
+
         return;
       }
 
@@ -3045,8 +3136,13 @@ function calculateStopLoss() {
       }
 
       localStorage.setItem("dailyPortfolioLog", JSON.stringify(dailyPortfolioLog));
-      dailyPortfolioInput.value = "";
+      if (importedData.withdrawalLog) {
+  withdrawalLog = importedData.withdrawalLog;
+  localStorage.setItem("withdrawalLog", JSON.stringify(withdrawalLog));
+}
+dailyPortfolioInput.value = "";
       updateWinLossMetrics();
+    updateTotalWithdrawn();
     });
 
     function updateWinLossMetrics() {
@@ -3064,6 +3160,11 @@ function calculateStopLoss() {
         // Reset all metrics
         document.getElementById("metricsStarting").textContent = startingBalance ? formatMoney(startingBalance) : "$0.00";
         document.getElementById("metricsCurrent").textContent = "$0.00";
+        const tw = updateTotalWithdrawn();
+        const mtw = document.getElementById("metricsWithdrawn");
+        const mtv = document.getElementById("metricsTrueValue");
+        if (mtw) mtw.textContent = formatMoney(tw);
+        if (mtv) mtv.textContent = "$0.00";
         document.getElementById("metricsTotalPnL").textContent = "$0.00 (0%)";
         document.getElementById("metricsBestDay").textContent = "--";
         document.getElementById("metricsWorstDay").textContent = "--";
@@ -3087,7 +3188,9 @@ function calculateStopLoss() {
       const sorted = [...dailyPortfolioLog].sort((a, b) => new Date(a.date) - new Date(b.date));
       
       const currentBalance = sorted[sorted.length - 1].portfolio;
-      const totalPnL = currentBalance - startingBalance;
+      const totalWithdrawals = withdrawalLog.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
+      const truePortfolioValue = currentBalance + totalWithdrawals;
+      const totalPnL = truePortfolioValue - startingBalance;
       const totalPnLPercent = (totalPnL / startingBalance) * 100;
 
       // Calculate daily changes
@@ -3109,6 +3212,8 @@ function calculateStopLoss() {
       // Basic metrics
       document.getElementById("metricsStarting").textContent = formatMoney(startingBalance);
       document.getElementById("metricsCurrent").textContent = formatMoney(currentBalance);
+      document.getElementById("metricsWithdrawn").textContent = formatMoney(totalWithdrawals);
+      document.getElementById("metricsTrueValue").textContent = formatMoney(truePortfolioValue);
       
       const pnlEl = document.getElementById("metricsTotalPnL");
       pnlEl.textContent = formatMoney(totalPnL) + " (" + (totalPnLPercent >= 0 ? "+" : "") + totalPnLPercent.toFixed(2) + "%)";
@@ -3339,6 +3444,7 @@ function calculateStopLoss() {
         dailyPortfolioLog.splice(index, 1);
         localStorage.setItem("dailyPortfolioLog", JSON.stringify(dailyPortfolioLog));
         updateWinLossMetrics();
+    updateTotalWithdrawn();
       }
     };
 
@@ -3354,6 +3460,7 @@ function calculateStopLoss() {
         portfolio: portfolioInput.value,
         startingBalance: startingBalance,
         dailyPortfolioLog: dailyPortfolioLog,
+        withdrawalLog: withdrawalLog,
         savedTrades: savedTrades,
         openPositions: openPositions,
         closedPositions: closedPositions,
@@ -3452,6 +3559,7 @@ function calculateStopLoss() {
           updatePortfolioTab();
           updateLocateSummary();
           updateWinLossMetrics();
+    updateTotalWithdrawn();
 
           alert("✅ Data imported successfully! All your trades and positions are loaded.");
           importFileInput.value = "";
@@ -3596,7 +3704,113 @@ function calculateStopLoss() {
     document.getElementById('avgInitialPrice').addEventListener('input', calculateAveragePrice);
 
 
-    // ========== INIT ==========
+    
+// ========== WITHDRAWAL TRACKING ==========
+function logWithdrawal() {
+  const amount = parseFloat(document.getElementById("withdrawalAmount").value);
+  if (!amount || amount <= 0) {
+    alert("Enter valid amount");
+    return;
+  }
+
+  const currentPortfolio = dailyPortfolioLog.length > 0
+    ? dailyPortfolioLog[dailyPortfolioLog.length - 1].portfolio
+    : (startingBalance || 0);
+
+  const now = new Date();
+  const est = toEstDate(now);
+
+  withdrawalLog.push({
+    amount: amount,
+    notes: document.getElementById("withdrawalNotes").value.trim() || "No notes",
+    portfolioBefore: currentPortfolio,
+    portfolioAfter: currentPortfolio - amount,
+    date: est.toLocaleDateString("en-US"),
+    time: est.toLocaleTimeString("en-US"),
+    timestamp: Date.now()
+  });
+
+  localStorage.setItem("withdrawalLog", JSON.stringify(withdrawalLog));
+
+  document.getElementById("withdrawalAmount").value = "";
+  document.getElementById("withdrawalNotes").value = "";
+
+  updateTotalWithdrawn();
+  updateWithdrawalsTab();
+  updateWinLossMetrics();
+    updateTotalWithdrawn();
+  alert("✅ Withdrawal logged");
+}
+
+function updateTotalWithdrawn() {
+  const total = withdrawalLog.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
+  const el = document.getElementById("totalWithdrawn");
+  if (el) el.textContent = formatMoney(total);
+  return total;
+}
+
+function updateWithdrawalsTab() {
+  const tbody = document.getElementById("withdrawalsTableBody");
+  if (!tbody) return;
+
+  if (!withdrawalLog || withdrawalLog.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--muted);">No withdrawals yet</td></tr>';
+    const z = "$0.00";
+    const el1 = document.getElementById("summaryTotalWithdrawals");
+    const el2 = document.getElementById("summaryWithdrawalCount");
+    const el3 = document.getElementById("summaryAvgWithdrawal");
+    const el4 = document.getElementById("summaryLargestWithdrawal");
+    if (el1) el1.textContent = z;
+    if (el2) el2.textContent = "0";
+    if (el3) el3.textContent = z;
+    if (el4) el4.textContent = z;
+    return;
+  }
+
+  const sorted = [...withdrawalLog].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  const total = withdrawalLog.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
+
+  tbody.innerHTML = "";
+  sorted.forEach((w) => {
+    const row = tbody.insertRow();
+    const notes = (w.notes || "").replace(/"/g, "&quot;");
+    row.innerHTML = `
+      <td>${w.date || ""}</td>
+      <td>${w.time || ""}</td>
+      <td style="font-weight: 600; color: #f97373;">-${formatMoney(w.amount || 0)}</td>
+      <td>${formatMoney(w.portfolioBefore || 0)}</td>
+      <td>${formatMoney(w.portfolioAfter || 0)}</td>
+      <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${notes}">${w.notes || ""}</td>
+      <td><button class="btn btn-cancel" style="padding: 3px 8px; font-size: 10px;" onclick="deleteWithdrawal(${w.timestamp})">Delete</button></td>
+    `;
+  });
+
+  const el1 = document.getElementById("summaryTotalWithdrawals");
+  const el2 = document.getElementById("summaryWithdrawalCount");
+  const el3 = document.getElementById("summaryAvgWithdrawal");
+  const el4 = document.getElementById("summaryLargestWithdrawal");
+
+  if (el1) el1.textContent = formatMoney(total);
+  if (el2) el2.textContent = String(withdrawalLog.length);
+  if (el3) el3.textContent = formatMoney(total / withdrawalLog.length);
+  if (el4) el4.textContent = formatMoney(Math.max(...withdrawalLog.map(w => parseFloat(w.amount) || 0)));
+}
+
+window.deleteWithdrawal = function(timestamp) {
+  if (confirm("Delete withdrawal?")) {
+    const index = withdrawalLog.findIndex(w => w.timestamp === timestamp);
+    if (index !== -1) {
+      withdrawalLog.splice(index, 1);
+      localStorage.setItem("withdrawalLog", JSON.stringify(withdrawalLog));
+      updateTotalWithdrawn();
+      updateWithdrawalsTab();
+      updateWinLossMetrics();
+    updateTotalWithdrawn();
+    }
+  }
+};
+
+// ========== INIT ==========
     updateLocateVisibility();
     calculate();
     displaySavedTrades();
@@ -3604,6 +3818,7 @@ function calculateStopLoss() {
     updatePortfolioTab();
     updateLocateSummary();
     updateWinLossMetrics();
+    updateTotalWithdrawn();
     calculateStopLoss();
     calculateAveragePrice();
   </script>
