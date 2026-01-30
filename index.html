@@ -3398,12 +3398,8 @@ dailyPortfolioInput.value = "";
       const cumulativeMap = {};
       
       sortedOldest.forEach(entry => {
-        // Get withdrawals for this date
-        const withdrawalsToday = withdrawalLog.filter(w => w.date === entry.date);
-        const withdrawnToday = withdrawalsToday.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
-        
-        // Daily change should include withdrawals (since portfolio value decreased by withdrawal amount)
-        const dailyChange = (entry.portfolio - prevBalance) + withdrawnToday;
+        // Simple daily change: what's in account today vs yesterday
+        const dailyChange = entry.portfolio - prevBalance;
         cumulativeGain += dailyChange;
         cumulativeMap[entry.date] = cumulativeGain;
         prevBalance = entry.portfolio;
@@ -3416,7 +3412,11 @@ dailyPortfolioInput.value = "";
       sortedForCalc.forEach((entry, index) => {
         const dailyChange = entry.portfolio - prevBalance;
         const dailyPercent = (dailyChange / prevBalance) * 100;
-        const cumulative = cumulativeMap[entry.date];
+        // Cumulative includes all withdrawals up to this date
+        const withdrawalsUpToDate = withdrawalLog
+          .filter(w => new Date(w.date) <= new Date(entry.date))
+          .reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
+        const cumulative = cumulativeMap[entry.date] + withdrawalsUpToDate;
         const cumulativePercent = (cumulative / startingBalance) * 100;
         prevBalance = entry.portfolio;
       });
@@ -3430,14 +3430,14 @@ dailyPortfolioInput.value = "";
         const entryIndex = sortedByDate.findIndex(e => e.date === entry.date);
         const prevBal = entryIndex > 0 ? sortedByDate[entryIndex - 1].portfolio : startingBalance;
         
-        // Get withdrawals for this date
-        const withdrawalsToday = withdrawalLog.filter(w => w.date === entry.date);
-        const withdrawnToday = withdrawalsToday.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
-        
-        // Daily change includes withdrawals
-        const dailyChange = (entry.portfolio - prevBal) + withdrawnToday;
+        // Daily change: simple comparison
+        const dailyChange = entry.portfolio - prevBal;
         const dailyPercent = (dailyChange / prevBal) * 100;
-        const cumulative = cumulativeMap[entry.date];
+        // Cumulative includes all withdrawals up to this date
+        const withdrawalsUpToDate = withdrawalLog
+          .filter(w => new Date(w.date) <= new Date(entry.date))
+          .reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
+        const cumulative = cumulativeMap[entry.date] + withdrawalsUpToDate;
         const cumulativePercent = (cumulative / startingBalance) * 100;
 
         const row = tbody.insertRow();
@@ -3732,8 +3732,8 @@ dailyPortfolioInput.value = "";
 // ========== WITHDRAWAL TRACKING ==========
 function logWithdrawal() {
   const amount = parseFloat(document.getElementById("withdrawalAmount").value);
-  if (!amount || amount <= 0) {
-    alert("Enter valid amount");
+  if (!amount || amount === 0 || isNaN(amount)) {
+    alert("Enter valid amount (positive for withdrawal, negative for deposit)");
     return;
   }
 
@@ -3801,7 +3801,7 @@ function updateWithdrawalsTab() {
     row.innerHTML = `
       <td>${w.date || ""}</td>
       <td>${w.time || ""}</td>
-      <td style="font-weight: 600; color: #f97373;">-${formatMoney(w.amount || 0)}</td>
+      <td style="font-weight: 600; color: ${w.amount >= 0 ? '#f97373' : '#4ade80'};">${w.amount >= 0 ? '-' : '+'}${formatMoney(Math.abs(w.amount || 0))}</td>
       <td>${formatMoney(w.portfolioBefore || 0)}</td>
       <td>${formatMoney(w.portfolioAfter || 0)}</td>
       <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${notes}">${w.notes || ""}</td>
