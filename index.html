@@ -3192,8 +3192,8 @@ dailyPortfolioInput.value = "";
       // Avoid double-counting withdrawals logged on the SAME date as the latest portfolio entry
       const truePortfolioValue = currentBalance + totalWithdrawals;
       
-      // Total P&L is ONLY from trading (current balance vs starting)
-      const totalPnL = currentBalance - startingBalance;
+      // Total P&L includes all gains (current + withdrawn)
+      const totalPnL = truePortfolioValue - startingBalance;
       const totalPnLPercent = (totalPnL / startingBalance) * 100;
 
       // Calculate daily changes (accounting for withdrawals)
