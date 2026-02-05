@@ -3189,7 +3189,13 @@ dailyPortfolioInput.value = "";
       
       const currentBalance = sorted[sorted.length - 1].portfolio;
       const totalWithdrawals = withdrawalLog.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
-      const truePortfolioValue = currentBalance + totalWithdrawals;
+      // Avoid double-counting withdrawals logged on the SAME date as the latest portfolio entry
+      const latestLogDate = sorted.length ? sorted[sorted.length - 1].date : null;
+      const withdrawalsOnLatestDate = latestLogDate ? withdrawalLog
+        .filter(w => w.date === latestLogDate)
+        .reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0) : 0;
+      const effectiveWithdrawals = totalWithdrawals - withdrawalsOnLatestDate;
+      const truePortfolioValue = currentBalance + effectiveWithdrawals;
       const totalPnL = truePortfolioValue - startingBalance;
       const totalPnLPercent = (totalPnL / startingBalance) * 100;
 
