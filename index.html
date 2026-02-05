@@ -3190,9 +3190,12 @@ dailyPortfolioInput.value = "";
       const currentBalance = sorted[sorted.length - 1].portfolio;
       const totalWithdrawals = withdrawalLog.reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
       // Avoid double-counting withdrawals logged on the SAME date as the latest portfolio entry
-      const truePortfolioValue = currentBalance + totalWithdrawals;
-      
-      // Total P&L includes all gains (current + withdrawn)
+      const latestLogDate = sorted.length ? sorted[sorted.length - 1].date : null;
+      const withdrawalsOnLatestDate = latestLogDate ? withdrawalLog
+        .filter(w => w.date === latestLogDate)
+        .reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0) : 0;
+      const effectiveWithdrawals = totalWithdrawals - withdrawalsOnLatestDate;
+      const truePortfolioValue = currentBalance + effectiveWithdrawals;
       const totalPnL = truePortfolioValue - startingBalance;
       const totalPnLPercent = (totalPnL / startingBalance) * 100;
 
@@ -3449,9 +3452,15 @@ sortedOldest.forEach(entry => {
 let adjustedPrevBal = prevBal;
 if (entryIndex > 0) {
   const prevDate = sortedByDate[entryIndex - 1].date;
+  console.log("Checking for withdrawals on date:", prevDate);
+  console.log("All withdrawal dates:", withdrawalLog.map(w => w.date));
+  
   const withdrawalsOnPrevDate = withdrawalLog
     .filter(w => w.date === prevDate)
     .reduce((sum, w) => sum + (parseFloat(w.amount) || 0), 0);
+  
+  console.log("Withdrawals found:", withdrawalsOnPrevDate);
+  console.log("Previous balance:", prevBal, "Adjusted:", prevBal - withdrawalsOnPrevDate);
 
   adjustedPrevBal = prevBal - withdrawalsOnPrevDate;
 }
