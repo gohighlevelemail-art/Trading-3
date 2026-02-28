@@ -1910,12 +1910,12 @@ let orderCounter = 0;
           updatePortfolioTab();
         } else if (tab === "locate") {
           updateLocateSummary();
-        } else if (tab === "winloss") {
-          updateWinLossMetrics();
-    updateTotalWithdrawn();
-        } else if (tab === "withdrawals") {
-          updateWithdrawalsTab();
-        }
+    } else if (tab === "winloss") {
+      updateWinLossMetrics();
+      updateTotalWithdrawn();
+    } else if (tab === "withdrawals") {
+      updateWithdrawalsTab();
+    }
       });
     });
 
