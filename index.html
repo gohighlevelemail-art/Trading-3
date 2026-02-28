@@ -756,10 +756,6 @@
         <span class="tab-icon">💾</span>
         Saved Trades
       </button>
-    <button class="tab-button" data-tab="withdrawals">
-  <span class="tab-icon">💸</span>
-  Withdrawals
-</button>
 </div>
 
     <div class="content">
@@ -1170,50 +1166,7 @@
             </div>
           </div>
 
-<!-- WITHDRAWALS TAB -->
-<div class="tab-panel" id="tab-withdrawals">
-  <div class="card">
-    <div class="card-title-row">
-      <div class="card-title">Withdrawal History</div>
-      <div class="card-note">Track profit withdrawals</div>
-    </div>
-
-    <!-- Summary -->
-    <div class="fees-card" style="margin-bottom: 16px;">
-      <div class="fees-header"><div class="fees-title">Summary</div></div>
-      <div class="fees-body">
-        <div class="fee-row">
-          <div class="fee-name">Total Withdrawals</div>
-          <div class="fee-value" id="summaryTotalWithdrawals" style="color: #f97373;">$0.00</div>
-        </div>
-        <div class="fee-row">
-          <div class="fee-name">Count</div>
-          <div class="fee-value" id="summaryWithdrawalCount">0</div>
-        </div>
-        <div class="fee-row">
-          <div class="fee-name">Average</div>
-          <div class="fee-value" id="summaryAvgWithdrawal">$0.00</div>
-        </div>
-        <div class="fee-total">
-          <div class="fee-total-label">Largest</div>
-          <div class="fee-total-value" id="summaryLargestWithdrawal">$0.00</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Table -->
-    <table class="trades-table">
-      <thead>
-        <tr><th>Date</th><th>Time</th><th>Amount</th><th>Before</th><th>After</th><th>Notes</th><th>Action</th></tr>
-      </thead>
-      <tbody id="withdrawalsTableBody">
-        <tr><td colspan="7" style="text-align: center; color: var(--muted);">No withdrawals yet</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-          <table class="trades-table">
+<table class="trades-table">
             <thead>
               <tr>
                 <th>Date</th>
@@ -1292,7 +1245,8 @@
             <button class="btn btn-execute" id="logDailyPortfolioButton" style="height: fit-content;">
               Log Today
             </button>
-<!-- Withdrawal Logger -->
+          </div> <!-- closes the daily logger grid -->
+          <!-- Withdrawal Logger -->
 <div style="border-top: 1px dashed rgba(55, 65, 81, 0.8); padding-top: 16px; margin-top: 16px;">
   <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px;">
     💸 Log Withdrawal
@@ -1316,6 +1270,48 @@
 </div>
 
           </div>
+        </div>
+
+
+        <!-- Withdrawal History -->
+        <div class="card">
+          <div class="card-title-row">
+            <div class="card-title">💸 Withdrawal History</div>
+            <div class="card-note">Track profit withdrawals</div>
+          </div>
+
+          <!-- Summary -->
+          <div class="fees-card" style="margin-bottom: 16px;">
+            <div class="fees-header"><div class="fees-title">Summary</div></div>
+            <div class="fees-body">
+              <div class="fee-row">
+                <div class="fee-name">Total Withdrawals</div>
+                <div class="fee-value" id="summaryTotalWithdrawals" style="color: #f97373;">$0.00</div>
+              </div>
+              <div class="fee-row">
+                <div class="fee-name">Count</div>
+                <div class="fee-value" id="summaryWithdrawalCount">0</div>
+              </div>
+              <div class="fee-row">
+                <div class="fee-name">Average</div>
+                <div class="fee-value" id="summaryAvgWithdrawal">$0.00</div>
+              </div>
+              <div class="fee-total">
+                <div class="fee-total-label">Largest</div>
+                <div class="fee-total-value" id="summaryLargestWithdrawal">$0.00</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <table class="trades-table">
+            <thead>
+              <tr><th>Date</th><th>Time</th><th>Amount</th><th>Before</th><th>After</th><th>Notes</th><th>Action</th></tr>
+            </thead>
+            <tbody id="withdrawalsTableBody">
+              <tr><td colspan="7" style="text-align: center; color: var(--muted);">No withdrawals yet</td></tr>
+            </tbody>
+          </table>
         </div>
 
         <!-- Performance Metrics Summary -->
@@ -1772,8 +1768,7 @@
     let savedTrades = JSON.parse(localStorage.getItem("savedTrades")) || [];
     let openPositions = JSON.parse(localStorage.getItem("openPositions")) || [];
     let closedPositions = JSON.parse(localStorage.getItem("closedPositions")) || [];
-    let dailyPnLData = JSON.parse(localStorage.getItem("dailyPnLData")) || [];
-    let locateEntries = JSON.parse(localStorage.getItem("locateEntries")) || [];
+let locateEntries = JSON.parse(localStorage.getItem("locateEntries")) || [];
     let startingBalance = parseFloat(localStorage.getItem("startingBalance")) || null;
     let dailyPortfolioLog = JSON.parse(localStorage.getItem("dailyPortfolioLog")) || [];
 let withdrawalLog = JSON.parse(localStorage.getItem("withdrawalLog")) || [];
@@ -1890,8 +1885,8 @@ let orderCounter = 0;
       average: document.getElementById("tab-average"),
       portfolio: document.getElementById("tab-portfolio"),
       saved: document.getElementById("tab-saved"),
-      withdrawals: document.getElementById("tab-withdrawals"),
-    };
+      
+};
 
     tabButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -1913,9 +1908,6 @@ let orderCounter = 0;
     } else if (tab === "winloss") {
       updateWinLossMetrics();
       updateTotalWithdrawn();
-    } else if (tab === "withdrawals") {
-      updateWithdrawalsTab();
-    }
       });
     });
 
@@ -3134,10 +3126,6 @@ function calculateStopLoss() {
       }
 
       localStorage.setItem("dailyPortfolioLog", JSON.stringify(dailyPortfolioLog));
-      if (importedData.withdrawalLog) {
-  withdrawalLog = importedData.withdrawalLog;
-  localStorage.setItem("withdrawalLog", JSON.stringify(withdrawalLog));
-}
 dailyPortfolioInput.value = "";
       updateWinLossMetrics();
     updateTotalWithdrawn();
@@ -3796,8 +3784,7 @@ function logWithdrawal() {
   updateTotalWithdrawn();
   updateWithdrawalsTab();
   updateWinLossMetrics();
-    updateTotalWithdrawn();
-  alert("✅ Withdrawal logged");
+    alert("✅ Withdrawal logged");
 }
 
 function updateTotalWithdrawn() {
@@ -3863,7 +3850,6 @@ window.deleteWithdrawal = function(timestamp) {
       updateTotalWithdrawn();
       updateWithdrawalsTab();
       updateWinLossMetrics();
-    updateTotalWithdrawn();
     }
   }
 };
