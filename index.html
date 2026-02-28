@@ -679,9 +679,14 @@
         width: 100%;
       }
     }
+  
+    /* Show certain sections only on Win/Loss tab */
+    .winloss-only { display: none; }
+    body[data-active-tab="winloss"] .winloss-only { display: block; }
+
   </style>
 </head>
-<body>
+<body data-active-tab="fees">
   <div class="app-container">
     <!-- HEADER -->
     <div class="header-row">
@@ -1274,7 +1279,7 @@
 
 
         <!-- Withdrawal History -->
-        <div class="card">
+        <div class="card winloss-only">
           <div class="card-title-row">
             <div class="card-title">💸 Withdrawal History</div>
             <div class="card-note">Track profit withdrawals</div>
@@ -1315,7 +1320,7 @@
         </div>
 
         <!-- Performance Metrics Summary -->
-        <div class="card">
+        <div class="card winloss-only">
           <div class="card-title">📊 Performance Metrics</div>
           
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin-top: 12px;">
@@ -1891,6 +1896,8 @@ let orderCounter = 0;
     tabButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
         const tab = btn.getAttribute("data-tab");
+        document.body.dataset.activeTab = tab;
+
         tabButtons.forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
         Object.keys(tabPanels).forEach((key) => {
