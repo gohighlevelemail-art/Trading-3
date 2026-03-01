@@ -749,6 +749,10 @@
 <span class="tab-icon">💾</span>
         Saved Trades
       </button>
+<button class="tab-button" data-tab="journal">
+<span class="tab-icon">📓</span>
+        Journal
+      </button>
 </div>
 <div class="content">
 <!-- FEE STRUCTURE TAB -->
@@ -1143,6 +1147,44 @@
 </div>
 </div>
 </div>
+<!-- Withdrawal History -->
+<div class="card">
+<div class="card-title-row">
+<div class="card-title">💸 Withdrawal History</div>
+<div class="card-note">Track profit withdrawals</div>
+</div>
+<!-- Summary -->
+<div class="fees-card" style="margin-bottom: 16px;">
+<div class="fees-header"><div class="fees-title">Summary</div></div>
+<div class="fees-body">
+<div class="fee-row">
+<div class="fee-name">Total Withdrawals</div>
+<div class="fee-value" id="summaryTotalWithdrawals" style="color: #f97373;">$0.00</div>
+</div>
+<div class="fee-row">
+<div class="fee-name">Count</div>
+<div class="fee-value" id="summaryWithdrawalCount">0</div>
+</div>
+<div class="fee-row">
+<div class="fee-name">Average</div>
+<div class="fee-value" id="summaryAvgWithdrawal">$0.00</div>
+</div>
+<div class="fee-total">
+<div class="fee-total-label">Largest</div>
+<div class="fee-total-value" id="summaryLargestWithdrawal">$0.00</div>
+</div>
+</div>
+</div>
+<!-- Table -->
+<table class="trades-table">
+<thead>
+<tr><th>Date</th><th>Time</th><th>Amount</th><th>Before</th><th>After</th><th>Notes</th><th>Action</th></tr>
+</thead>
+<tbody id="withdrawalsTableBody">
+<tr><td colspan="7" style="text-align: center; color: var(--muted);">No withdrawals yet</td></tr>
+</tbody>
+</table>
+</div>
 <!-- Performance Metrics Summary -->
 <div class="card">
 <div class="card-title">📊 Performance Metrics</div>
@@ -1265,46 +1307,6 @@
 </div>
 </div>
 </div>
-
-<!-- Withdrawal History -->
-<div class="card">
-<div class="card-title-row">
-<div class="card-title">💸 Withdrawal History</div>
-<div class="card-note">Track profit withdrawals</div>
-</div>
-<!-- Summary -->
-<div class="fees-card" style="margin-bottom: 16px;">
-<div class="fees-header"><div class="fees-title">Summary</div></div>
-<div class="fees-body">
-<div class="fee-row">
-<div class="fee-name">Total Withdrawals</div>
-<div class="fee-value" id="summaryTotalWithdrawals" style="color: #f97373;">$0.00</div>
-</div>
-<div class="fee-row">
-<div class="fee-name">Count</div>
-<div class="fee-value" id="summaryWithdrawalCount">0</div>
-</div>
-<div class="fee-row">
-<div class="fee-name">Average</div>
-<div class="fee-value" id="summaryAvgWithdrawal">$0.00</div>
-</div>
-<div class="fee-total">
-<div class="fee-total-label">Largest</div>
-<div class="fee-total-value" id="summaryLargestWithdrawal">$0.00</div>
-</div>
-</div>
-</div>
-<!-- Table -->
-<table class="trades-table">
-<thead>
-<tr><th>Date</th><th>Time</th><th>Amount</th><th>Before</th><th>After</th><th>Notes</th><th>Action</th></tr>
-</thead>
-<tbody id="withdrawalsTableBody">
-<tr><td colspan="7" style="text-align: center; color: var(--muted);">No withdrawals yet</td></tr>
-</tbody>
-</table>
-</div>
-    
 <!-- LOCATE FEES TAB -->
 <div class="tab-panel" id="tab-locate">
 <div class="card">
@@ -1537,6 +1539,88 @@
 </div>
 </div>
 </div>
+<!-- ========== JOURNAL TAB ========== -->
+<div class="tab-panel" id="tab-journal">
+
+  <!-- NEW ENTRY CARD -->
+  <div class="card">
+    <div class="card-title-row">
+      <div class="card-title">📓 New Entry</div>
+      <div class="card-note">Log your trade thoughts or market observations</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      <div class="field">
+        <label for="journalTitle">Entry Title</label>
+        <input
+          id="journalTitle"
+          class="input"
+          type="text"
+          placeholder="e.g. MRNO gap up — felt rushed on entry"
+        />
+      </div>
+      <div class="field">
+        <label for="journalType">Entry Type</label>
+        <select id="journalType" class="select" onchange="toggleQuizSection()">
+          <option value="trade">📈 Trade Journal</option>
+          <option value="market">🌐 Market Notes</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:14px;">
+      <label for="journalNotes">Notes</label>
+      <textarea
+        id="journalNotes"
+        class="input"
+        rows="7"
+        placeholder="Write your full thought process here. No limit — the more detail the better."
+        style="resize:vertical;font-family:inherit;line-height:1.6;"
+      ></textarea>
+    </div>
+
+    <!-- QUIZ SECTION — only visible when Market Notes is selected -->
+    <div
+      id="quizSection"
+      style="display:none;background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.25);border-radius:10px;padding:16px;margin-bottom:14px;"
+    >
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:600;color:#c4b5fd;">🧠 Quiz Questions</div>
+        <div style="font-size:11px;color:var(--muted);">Write questions now so you can test yourself later</div>
+      </div>
+      <div id="quizQuestionsContainer"></div>
+      <button
+        class="btn btn-execute"
+        onclick="addQuizQuestion()"
+        style="margin-top:8px;padding:5px 14px;font-size:11px;"
+      >
+        + Add Question
+      </button>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn btn-execute" onclick="saveJournalEntry()">
+        💾 Save Entry
+      </button>
+    </div>
+  </div>
+
+  <!-- ENTRY HISTORY CARD -->
+  <div class="card">
+    <div class="card-title-row">
+      <div class="card-title">📋 Entry History</div>
+      <div class="card-note">Click View to read a past entry · Quiz Me to test your recall</div>
+    </div>
+    <div id="journalHistoryList">
+      <div style="text-align:center;color:var(--muted);padding:24px 0;font-size:13px;">
+        No entries yet. Write your first journal entry above.
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- ========== END JOURNAL TAB ========== -->
+
 <script>
     // ========== ELEMENT REFERENCES (Declare all elements first) ==========
     const portfolioInput = document.getElementById("portfolioInput");
@@ -1688,6 +1772,7 @@ let orderCounter = 0;
       average: document.getElementById("tab-average"),
       portfolio: document.getElementById("tab-portfolio"),
       saved: document.getElementById("tab-saved"),
+      journal: document.getElementById("tab-journal"),
       
 };
 
@@ -1727,6 +1812,8 @@ if (tab === "risk") {
         } else if (tab === "winloss") {
           updateWinLossMetrics();
           updateTotalWithdrawn();
+        } else if (tab === "journal") {
+          renderJournalHistory();
         }
       });
     });
@@ -3673,6 +3760,266 @@ window.deleteWithdrawal = function(timestamp) {
     }
   }
 };
+
+// ========== JOURNAL TAB ==========
+
+// Load journal entries from localStorage
+let journalEntries = JSON.parse(localStorage.getItem("journalEntries")) || [];
+
+// Counter for quiz question rows
+let quizQuestionCounter = 0;
+
+// Show/hide quiz section based on entry type dropdown
+function toggleQuizSection() {
+  const type = document.getElementById("journalType").value;
+  const section = document.getElementById("quizSection");
+  if (type === "market") {
+    section.style.display = "block";
+    if (document.getElementById("quizQuestionsContainer").children.length === 0) {
+      addQuizQuestion();
+    }
+  } else {
+    section.style.display = "none";
+  }
+}
+
+// Add a question/answer row inside the quiz section
+function addQuizQuestion() {
+  quizQuestionCounter++;
+  const container = document.getElementById("quizQuestionsContainer");
+  const row = document.createElement("div");
+  row.id = "quizRow-" + quizQuestionCounter;
+  row.style.cssText = `
+    background: rgba(15,23,42,0.4);
+    border: 1px solid rgba(167,139,250,0.2);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+  `;
+  row.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-size:11px;font-weight:700;color:#c4b5fd;">Question ${quizQuestionCounter}</div>
+      <button class="btn btn-cancel" style="padding:2px 8px;font-size:10px;" onclick="removeQuizQuestion(${quizQuestionCounter})">Remove</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="field">
+        <label>Question</label>
+        <input id="quizQ-${quizQuestionCounter}" class="input" type="text" placeholder="e.g. What did SPY do after the Fed announcement?" />
+      </div>
+      <div class="field">
+        <label>Answer</label>
+        <input id="quizA-${quizQuestionCounter}" class="input" type="text" placeholder="e.g. Dropped 1.2% on heavy volume" />
+      </div>
+    </div>
+  `;
+  container.appendChild(row);
+}
+
+// Remove a quiz question row
+window.removeQuizQuestion = function(id) {
+  const el = document.getElementById("quizRow-" + id);
+  if (el) el.remove();
+};
+
+// Collect quiz questions from the form
+function collectQuizQuestions() {
+  const questions = [];
+  const container = document.getElementById("quizQuestionsContainer");
+  const rows = container.querySelectorAll("[id^='quizRow-']");
+  rows.forEach(row => {
+    const id = row.id.replace("quizRow-", "");
+    const q = document.getElementById("quizQ-" + id);
+    const a = document.getElementById("quizA-" + id);
+    if (q && a && q.value.trim()) {
+      questions.push({ question: q.value.trim(), answer: a.value.trim() });
+    }
+  });
+  return questions;
+}
+
+// Save a new journal entry
+function saveJournalEntry() {
+  const title = document.getElementById("journalTitle").value.trim();
+  const type  = document.getElementById("journalType").value;
+  const notes = document.getElementById("journalNotes").value.trim();
+
+  if (!title) { alert("Please enter a title for your entry."); return; }
+  if (!notes)  { alert("Please write some notes before saving."); return; }
+
+  const now = new Date();
+  const entry = {
+    id:        Date.now(),
+    title:     title,
+    type:      type,
+    notes:     notes,
+    questions: type === "market" ? collectQuizQuestions() : [],
+    date:      now.toLocaleDateString("en-US"),
+    time:      now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+    timestamp: Date.now()
+  };
+
+  journalEntries.unshift(entry);
+  localStorage.setItem("journalEntries", JSON.stringify(journalEntries));
+
+  // Reset form
+  document.getElementById("journalTitle").value = "";
+  document.getElementById("journalType").value = "trade";
+  document.getElementById("journalNotes").value = "";
+  document.getElementById("quizSection").style.display = "none";
+  document.getElementById("quizQuestionsContainer").innerHTML = "";
+  quizQuestionCounter = 0;
+
+  renderJournalHistory();
+  alert("✅ Journal entry saved!");
+}
+
+// Render the history list
+function renderJournalHistory() {
+  const container = document.getElementById("journalHistoryList");
+  if (!container) return;
+
+  if (!journalEntries || journalEntries.length === 0) {
+    container.innerHTML = `<div style="text-align:center;color:var(--muted);padding:24px 0;font-size:13px;">No entries yet. Write your first journal entry above.</div>`;
+    return;
+  }
+
+  container.innerHTML = journalEntries.map((entry) => {
+    const isMarket = entry.type === "market";
+    const typeBadge = isMarket
+      ? `<span style="background:rgba(74,222,128,0.15);color:#4ade80;border:1px solid rgba(74,222,128,0.4);border-radius:999px;padding:2px 9px;font-size:10px;font-weight:700;">🌐 Market Notes</span>`
+      : `<span style="background:rgba(59,130,246,0.15);color:#7dd3fc;border:1px solid rgba(59,130,246,0.4);border-radius:999px;padding:2px 9px;font-size:10px;font-weight:700;">📈 Trade Journal</span>`; 
+
+    const quizBtn = isMarket && entry.questions && entry.questions.length > 0
+      ? `<button class="btn" style="padding:3px 10px;font-size:11px;background:rgba(167,139,250,0.15);color:#c4b5fd;border:1px solid rgba(167,139,250,0.4);border-radius:999px;" onclick="openQuizMode(${entry.id})">🧠 Quiz Me</button>`
+      : "";
+
+    return `
+      <div style="padding:14px 0;border-bottom:1px dashed var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:#e2e8f0;margin-bottom:4px;">${entry.title}</div>
+            <div style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              ${entry.date} · ${entry.time}   ${typeBadge}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-execute" style="padding:3px 10px;font-size:11px;" onclick="viewJournalEntry(${entry.id})">View</button>
+            ${quizBtn}
+            <button class="btn btn-cancel" style="padding:3px 10px;font-size:11px;" onclick="deleteJournalEntry(${entry.id})">Delete</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// Open a full view of a journal entry in a modal overlay
+window.viewJournalEntry = function(id) {
+  const entry = journalEntries.find(e => e.id === id);
+  if (!entry) return;
+
+  const isMarket = entry.type === "market";
+  const typeBadge = isMarket
+    ? `<span style="background:rgba(74,222,128,0.15);color:#4ade80;border:1px solid rgba(74,222,128,0.4);border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;">🌐 Market Notes</span>`
+    : `<span style="background:rgba(59,130,246,0.15);color:#7dd3fc;border:1px solid rgba(59,130,246,0.4);border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700;">📈 Trade Journal</span>`;
+
+  const overlay = document.createElement("div");
+  overlay.id = "journalViewOverlay";
+  overlay.style.cssText = `
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(2,6,23,0.92);z-index:9999;
+    display:flex;align-items:flex-start;justify-content:center;
+    padding:40px 16px;overflow-y:auto;
+  `;
+
+  overlay.innerHTML = `
+    <div style="width:100%;max-width:720px;background:#101623;border:1px solid #1f2933;border-radius:14px;padding:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:6px;">${entry.title}</div>
+          <div style="font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center;">${entry.date} · ${entry.time}   ${typeBadge}</div>
+        </div>
+        <button class="btn btn-cancel" style="padding:5px 12px;font-size:12px;" onclick="document.getElementById('journalViewOverlay').remove()">✕ Close</button>
+      </div>
+
+      <div style="white-space:pre-wrap;font-size:13px;color:#e5e7eb;line-height:1.7;padding:14px;border:1px solid #1f2937;border-radius:10px;background:rgba(15,23,42,0.35);">
+${entry.notes}
+      </div>
+
+      ${isMarket && entry.questions && entry.questions.length ? `
+        <div style="margin-top:16px;padding:14px;border:1px solid rgba(167,139,250,0.25);border-radius:10px;background:rgba(167,139,250,0.06);">
+          <div style="font-weight:700;color:#c4b5fd;margin-bottom:10px;">🧠 Saved Quiz Questions</div>
+          ${(entry.questions || []).map((q, i) => `
+            <div style="margin-bottom:10px;">
+              <div style="font-size:12px;font-weight:700;color:#e2e8f0;">Q${i+1}: ${q.question}</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:3px;">A: ${q.answer || ""}</div>
+            </div>
+          `).join("")}
+        </div>
+      ` : ""}
+
+    </div>
+  `;
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
+
+  document.body.appendChild(overlay);
+};
+
+// Delete an entry
+window.deleteJournalEntry = function(id) {
+  const ok = confirm("Delete this journal entry? This cannot be undone.");
+  if (!ok) return;
+
+  journalEntries = journalEntries.filter(e => e.id !== id);
+  localStorage.setItem("journalEntries", JSON.stringify(journalEntries));
+  renderJournalHistory();
+};
+
+// Quiz mode overlay: hides answers and lets user reveal
+window.openQuizMode = function(id) {
+  const entry = journalEntries.find(e => e.id === id);
+  if (!entry || !entry.questions || entry.questions.length === 0) return;
+
+  const overlay = document.createElement("div");
+  overlay.id = "quizOverlay";
+  overlay.style.cssText = `
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(2,6,23,0.92);z-index:9999;
+    display:flex;align-items:flex-start;justify-content:center;
+    padding:40px 16px;overflow-y:auto;
+  `;
+
+  overlay.innerHTML = `
+    <div style="width:100%;max-width:720px;background:#101623;border:1px solid #1f2933;border-radius:14px;padding:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:6px;">🧠 Quiz Mode</div>
+          <div style="font-size:12px;color:var(--muted);">Entry: ${entry.title}</div>
+        </div>
+        <button class="btn btn-cancel" style="padding:5px 12px;font-size:12px;" onclick="document.getElementById('quizOverlay').remove()">✕ Close</button>
+      </div>
+
+      ${(entry.questions || []).map((q, i) => `
+        <div style="margin-bottom:14px;padding:14px;border:1px solid rgba(167,139,250,0.25);border-radius:10px;background:rgba(167,139,250,0.06);">
+          <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:8px;">Q${i+1}: ${q.question}</div>
+          <button class="btn btn-execute" style="padding:4px 10px;font-size:11px;" onclick="this.nextElementSibling.style.display='block'; this.style.display='none';">Reveal Answer</button>
+          <div style="display:none;margin-top:10px;font-size:12px;color:var(--muted);white-space:pre-wrap;">A: ${q.answer || ""}</div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
+
+  document.body.appendChild(overlay);
+};
+
+
 
 // ========== INIT ==========
     updateLocateVisibility();
