@@ -1147,8 +1147,8 @@
 </div>
 </div>
 </div>
-<div id="withdrawalHistorySection">
 <!-- Withdrawal History -->
+<div id="withdrawalHistoryCard">
 <div class="card">
 <div class="card-title-row">
 <div class="card-title">💸 Withdrawal History</div>
@@ -1778,24 +1778,18 @@ let orderCounter = 0;
       
 };
 
-    // Ensure Win/Loss-only sections live inside the Win/Loss tab (prevents accidental nesting/bleed across tabs)
-    (function enforceWinLossSections() {
-      const winlossPanel = document.getElementById("tab-winloss");
-      if (!winlossPanel) return;
-
-      const withdrawalSection = document.getElementById("withdrawalHistorySection");
-      if (withdrawalSection && withdrawalSection.parentElement !== winlossPanel) {
-        winlossPanel.appendChild(withdrawalSection);
-      }
-    })();
-
-
-    // Initial: show Daily Portfolio History only when Win/Loss tab is active
+    // Initial: show Win/Loss-only sections only when Win/Loss tab is active
     (function(){
-      const dailyHistoryCard = document.getElementById("dailyHistoryCard");
       const winlossPanel = document.getElementById("tab-winloss");
+
+      const dailyHistoryCard = document.getElementById("dailyHistoryCard");
       if (dailyHistoryCard && winlossPanel && !winlossPanel.classList.contains("active")) {
         dailyHistoryCard.style.display = "none";
+      }
+
+      const withdrawalHistoryCard = document.getElementById("withdrawalHistoryCard");
+      if (withdrawalHistoryCard && winlossPanel && !winlossPanel.classList.contains("active")) {
+        withdrawalHistoryCard.style.display = "none";
       }
     })();
 
@@ -1810,10 +1804,15 @@ let orderCounter = 0;
         });
 
         
-        // Ensure Daily Portfolio History only shows under Win/Loss
+        // Ensure Win/Loss-only sections don't appear on other tabs
         const dailyHistoryCard = document.getElementById("dailyHistoryCard");
         if (dailyHistoryCard) {
           dailyHistoryCard.style.display = (tab === "winloss") ? "" : "none";
+        }
+
+        const withdrawalHistoryCard = document.getElementById("withdrawalHistoryCard");
+        if (withdrawalHistoryCard) {
+          withdrawalHistoryCard.style.display = (tab === "winloss") ? "" : "none";
         }
 if (tab === "risk") {
           updateRiskManagement();
