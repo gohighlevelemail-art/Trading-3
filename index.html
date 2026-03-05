@@ -3431,8 +3431,8 @@ const cumulative = cumulativeMap[entry.date];
         openPositions: openPositions,
         closedPositions: closedPositions,
         locateEntries: locateEntries,
-        journalEntries: journalEntries,
-        workerUrl: localStorage.getItem("worker_url")
+        workerUrl: localStorage.getItem("worker_url"),
+        journalEntries: journalEntries
       };
 
       // Convert to JSON
@@ -3473,7 +3473,8 @@ const cumulative = cumulativeMap[entry.date];
             `- ${importedData.savedTrades?.length || 0} Saved Trades\n` +
             `- ${importedData.openPositions?.length || 0} Open Positions\n` +
             `- ${importedData.closedPositions?.length || 0} Closed Positions\n` +
-            `- ${importedData.locateEntries?.length || 0} Locate Entries\n\n` +
+            `- ${importedData.locateEntries?.length || 0} Locate Entries\n` +
+            `- ${importedData.journalEntries?.length || 0} Journal Entries\n\n` +
             `Current data will be REPLACED!`;
 
           if (!confirm(confirm_msg)) {
@@ -3516,7 +3517,6 @@ const cumulative = cumulativeMap[entry.date];
             locateEntries = importedData.locateEntries;
             localStorage.setItem("locateEntries", JSON.stringify(locateEntries));
           }
-
           if (importedData.journalEntries) {
             journalEntries = importedData.journalEntries;
             localStorage.setItem("journalEntries", JSON.stringify(journalEntries));
@@ -3532,8 +3532,6 @@ const cumulative = cumulativeMap[entry.date];
           updateLocateSummary();
           updateWinLossMetrics();
     updateTotalWithdrawn();
-
-          renderJournalHistory();
 
           alert("✅ Data imported successfully! All your trades and positions are loaded.");
           importFileInput.value = "";
