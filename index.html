@@ -3431,6 +3431,7 @@ const cumulative = cumulativeMap[entry.date];
         openPositions: openPositions,
         closedPositions: closedPositions,
         locateEntries: locateEntries,
+        journalEntries: journalEntries,
         workerUrl: localStorage.getItem("worker_url")
       };
 
@@ -3516,6 +3517,11 @@ const cumulative = cumulativeMap[entry.date];
             localStorage.setItem("locateEntries", JSON.stringify(locateEntries));
           }
 
+          if (importedData.journalEntries) {
+            journalEntries = importedData.journalEntries;
+            localStorage.setItem("journalEntries", JSON.stringify(journalEntries));
+          }
+
           if (importedData.workerUrl) {
             localStorage.setItem("worker_url", importedData.workerUrl);
           }
@@ -3526,6 +3532,8 @@ const cumulative = cumulativeMap[entry.date];
           updateLocateSummary();
           updateWinLossMetrics();
     updateTotalWithdrawn();
+
+          renderJournalHistory();
 
           alert("✅ Data imported successfully! All your trades and positions are loaded.");
           importFileInput.value = "";
