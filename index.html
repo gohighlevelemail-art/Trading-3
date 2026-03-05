@@ -1115,13 +1115,17 @@
               Log your end-of-day portfolio value
             </div>
 </div>
-<div style="display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: end;">
+<div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end;">
 <div class="field">
-<label for="dailyPortfolioInput">Today's Portfolio Value</label>
+<label for="dailyPortfolioInput">Portfolio Value</label>
 <input class="input" id="dailyPortfolioInput" placeholder="e.g. 1807.17" step="0.01" type="number">
 </input></div>
+<div class="field">
+<label for="dailyPortfolioDate">Date</label>
+<input class="input" id="dailyPortfolioDate" type="date">
+</input></div>
 <button class="btn btn-execute" id="logDailyPortfolioButton" style="height: fit-content;">
-              Log Today
+              Log
             </button>
 </div> <!-- closes the daily logger grid -->
 <!-- Withdrawal Logger -->
@@ -2994,6 +2998,11 @@ function calculateStopLoss() {
     const startingBalanceInput = document.getElementById("startingBalanceInput");
     const logDailyPortfolioButton = document.getElementById("logDailyPortfolioButton");
     const dailyPortfolioInput = document.getElementById("dailyPortfolioInput");
+      const dailyPortfolioDatePicker = document.getElementById("dailyPortfolioDate");
+      if (dailyPortfolioDatePicker) {
+        const todayStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD format
+        dailyPortfolioDatePicker.value = todayStr;
+      }
     const logWithdrawalButton = document.getElementById("logWithdrawalButton");
     const withdrawalAmount = document.getElementById("withdrawalAmount");
     const withdrawalNotes = document.getElementById("withdrawalNotes");
@@ -3027,23 +3036,26 @@ function calculateStopLoss() {
         return;
       }
 
-      const today = new Date().toLocaleDateString("en-US");
-      
-      // Check if already logged today (overwrite if yes)
-      const existingIndex = dailyPortfolioLog.findIndex(entry => entry.date === today);
-      
+      const dateInput = document.getElementById("dailyPortfolioDate").value;
+      const logDate = dateInput
+        ? new Date(dateInput + "T12:00:00").toLocaleDateString("en-US")
+        : new Date().toLocaleDateString("en-US");
+
+      // Check if already logged for that date (overwrite if yes)
+      const existingIndex = dailyPortfolioLog.findIndex(entry => entry.date === logDate);
+
       const entry = {
-        date: today,
+        date: logDate,
         portfolio: portfolioValue,
         timestamp: Date.now()
       };
 
       if (existingIndex !== -1) {
         dailyPortfolioLog[existingIndex] = entry;
-        alert("✅ Today's portfolio value updated!");
+        alert("✅ Portfolio value updated for " + logDate);
       } else {
         dailyPortfolioLog.push(entry);
-        alert("✅ Portfolio logged for " + today);
+        alert("✅ Portfolio logged for " + logDate);
       }
 
       localStorage.setItem("dailyPortfolioLog", JSON.stringify(dailyPortfolioLog));
