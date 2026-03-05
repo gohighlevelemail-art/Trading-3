@@ -1661,6 +1661,7 @@ let locateEntries = JSON.parse(localStorage.getItem("locateEntries")) || [];
     let startingBalance = parseFloat(localStorage.getItem("startingBalance")) || null;
     let dailyPortfolioLog = JSON.parse(localStorage.getItem("dailyPortfolioLog")) || [];
 let withdrawalLog = JSON.parse(localStorage.getItem("withdrawalLog")) || [];
+let journalEntries = JSON.parse(localStorage.getItem("journalEntries")) || [];
 let additionalOrders = [];
 let orderCounter = 0;
 
@@ -3783,7 +3784,6 @@ window.deleteWithdrawal = function(timestamp) {
 // ========== JOURNAL TAB ==========
 
 // Load journal entries from localStorage
-let journalEntries = JSON.parse(localStorage.getItem("journalEntries")) || [];
 
 // Counter for quiz question rows
 let quizQuestionCounter = 0;
