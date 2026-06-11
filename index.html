@@ -680,6 +680,107 @@
         width: 100%;
       }
     }
+
+
+    /* AI Trading Consultant */
+    .tabs {
+      flex-wrap: wrap;
+      gap: 2px;
+    }
+
+    .consultant-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px 18px;
+    }
+
+    .consultant-chat-window {
+      min-height: 360px;
+      max-height: 560px;
+      overflow-y: auto;
+      border: 1px solid #1f2937;
+      border-radius: 12px;
+      background: rgba(2, 6, 23, 0.55);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .consultant-message {
+      border-radius: 12px;
+      padding: 12px 14px;
+      border: 1px solid #1f2937;
+      white-space: pre-wrap;
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    .consultant-message.user {
+      background: rgba(59, 130, 246, 0.12);
+      border-color: rgba(59, 130, 246, 0.42);
+      color: #dbeafe;
+    }
+
+    .consultant-message.assistant {
+      background: rgba(15, 23, 42, 0.72);
+      border-color: rgba(148, 163, 184, 0.24);
+      color: #e5e7eb;
+    }
+
+    .consultant-message.system {
+      background: rgba(245, 158, 11, 0.08);
+      border-color: rgba(245, 158, 11, 0.32);
+      color: #fde68a;
+      font-size: 12px;
+    }
+
+    .consultant-message-header {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .consultant-snapshot {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+
+    .quick-prompt-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .btn-consultant {
+      background: transparent;
+      color: #93c5fd;
+      border: 1px solid rgba(147, 197, 253, 0.7);
+    }
+
+    .btn-consultant:hover {
+      background: rgba(59, 130, 246, 0.18);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .consultant-warning {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border: 1px solid rgba(249, 115, 115, 0.45);
+      background: rgba(249, 115, 115, 0.08);
+      color: #fecaca;
+      border-radius: 10px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
   </style>
 </head>
 <body>
@@ -749,6 +850,10 @@
 <button class="tab-button" data-tab="saved">
 <span class="tab-icon">💾</span>
         Saved Trades
+      </button>
+<button class="tab-button" data-tab="consultant">
+<span class="tab-icon">🤖</span>
+        AI Consultant
       </button>
 <button class="tab-button" data-tab="journal">
 <span class="tab-icon">📓</span>
@@ -1546,6 +1651,106 @@
 </div>
 </div>
 </div>
+
+<!-- ========== AI CONSULTANT TAB ========== -->
+<div class="tab-panel" id="tab-consultant">
+  <div class="card">
+    <div class="card-title-row">
+      <div>
+        <div class="card-title">🤖 AI Trading Consultant</div>
+        <div class="card-note">Risk-defense consultant using your trade inputs, locate costs, Level 2 notes, screenshots, and poker-style execution logic.</div>
+      </div>
+      <button class="btn btn-consultant" id="aiRefreshSnapshotButton" style="padding: 6px 12px; font-size: 11px;">↻ Refresh Snapshot</button>
+    </div>
+
+    <div class="consultant-grid" style="margin-bottom: 14px;">
+      <div class="field">
+        <label for="aiMaxLoss">Max Loss Threshold ($)</label>
+        <input class="input" id="aiMaxLoss" min="0" step="1" type="number" value="650" />
+      </div>
+      <div class="field">
+        <label for="aiMaxShares">Max Shares Cap</label>
+        <input class="input" id="aiMaxShares" min="1" step="1" type="number" value="60" />
+      </div>
+      <div class="field">
+        <label for="aiStarterShares">Starter Shares</label>
+        <input class="input" id="aiStarterShares" min="1" step="1" type="number" value="25" />
+      </div>
+      <div class="field">
+        <label for="aiCurrentShares">Current Position Shares</label>
+        <input class="input" id="aiCurrentShares" min="0" step="1" type="number" placeholder="Optional" />
+      </div>
+      <div class="field">
+        <label for="aiCurrentAvgPrice">Current Avg Price</label>
+        <input class="input" id="aiCurrentAvgPrice" min="0" step="0.001" type="number" placeholder="Optional" />
+      </div>
+      <div class="field">
+        <label for="aiLocatePerShare">Locate Price / Share</label>
+        <input class="input" id="aiLocatePerShare" min="0" step="0.0001" type="number" placeholder="e.g. 0.0747" />
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom: 14px;">
+      <div class="field">
+        <label for="aiLevel2Data">Level 2 / Tape Data</label>
+        <textarea class="input" id="aiLevel2Data" rows="6" placeholder="Paste bid/ask spread, walls, VWAP, RSI, halt levels, locate quote, or anything you see on screen." style="resize: vertical; font-family: inherit; line-height: 1.5;"></textarea>
+      </div>
+      <div class="field">
+        <label for="aiStrategyNotes">Strategy / Execution Notes</label>
+        <textarea class="input" id="aiStrategyNotes" rows="6" placeholder="Example: Small-big-big short idea. Start 25 shares at $15, max 60 shares, do not add early unless price stretches." style="resize: vertical; font-family: inherit; line-height: 1.5;"></textarea>
+      </div>
+    </div>
+
+    <div class="fees-card" style="margin-bottom: 14px;">
+      <div class="fees-header">
+        <div class="fees-title">Live App Snapshot</div>
+        <div class="fees-body" style="font-size: 11px;">Pulled from Fee Structure, Average Price, Locate Fees, and Open Positions.</div>
+      </div>
+      <div class="consultant-snapshot" id="aiContextSnapshot">No snapshot yet.</div>
+    </div>
+
+    <div class="field" style="margin-bottom: 12px;">
+      <label for="aiImageInput">Optional screenshot of Level 2 / 1-min chart</label>
+      <input class="input" id="aiImageInput" accept="image/*" type="file" />
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;">
+        <div class="status-text" id="aiImageStatus" style="margin-top:0;">No screenshot attached.</div>
+        <button class="btn btn-cancel" id="aiClearImageButton" style="padding: 4px 10px; font-size: 11px; display:none;">Remove Screenshot</button>
+      </div>
+    </div>
+
+    <div class="consultant-warning">
+      Guardrail: this consultant is for education, risk math, position sizing discipline, and tape-reading of data you provide. It does not place trades, connect to your broker, or guarantee outcomes. If the math says the hand is trash, it should tell you to fold/wait.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title-row">
+      <div class="card-title">Consultant Chat</div>
+      <div class="card-note">Ask for company explanation, max-loss sizing, locate-cost adjustment, Level 2 read, or execution discipline.</div>
+    </div>
+
+    <div class="consultant-chat-window" id="aiChatWindow"></div>
+
+    <div class="quick-prompt-row">
+      <button class="btn btn-consultant" data-ai-prompt="Explain this ticker like I am twelve. What does the company do, why might it be moving, and what structural traps should I watch for?">Explain Ticker</button>
+      <button class="btn btn-consultant" data-ai-prompt="Calculate position sizing against my max loss threshold. Include locate costs, current average, starter shares, max shares, and a small-big-big execution ladder.">Size Position</button>
+      <button class="btn btn-consultant" data-ai-prompt="Read my Level 2 and tape notes. Identify bid/ask pressure, fake walls, spread danger, VWAP magnet, and whether I should wait for a better hand.">Read Level 2</button>
+      <button class="btn btn-consultant" data-ai-prompt="Give me a poker reset. Am I holding pocket aces, chasing a bad board, or protecting the pot? Be direct and risk-first.">Poker Reset</button>
+    </div>
+
+    <div class="field" style="margin-top: 14px;">
+      <label for="aiConsultantInput">Message</label>
+      <textarea class="input" id="aiConsultantInput" rows="4" placeholder="Example: VERO is at $15.20, I have 25 shares short avg $15, locate is 0.08/share, max loss $650, max 60 shares. How do I scale without going too big too early?" style="resize: vertical; font-family: inherit; line-height: 1.5;"></textarea>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn btn-cancel" id="aiClearChatButton">🧹 Clear Chat</button>
+      <button class="btn btn-execute" id="aiAskButton">Ask Consultant</button>
+    </div>
+  </div>
+</div>
+<!-- ========== END AI CONSULTANT TAB ========== -->
+
 <!-- ========== JOURNAL TAB ========== -->
 <div class="tab-panel" id="tab-journal">
 
@@ -1780,6 +1985,7 @@ let orderCounter = 0;
       average: document.getElementById("tab-average"),
       portfolio: document.getElementById("tab-portfolio"),
       saved: document.getElementById("tab-saved"),
+      consultant: document.getElementById("tab-consultant"),
       journal: document.getElementById("tab-journal"),
       
 };
@@ -1831,6 +2037,9 @@ if (tab === "risk") {
         } else if (tab === "winloss") {
           updateWinLossMetrics();
           updateTotalWithdrawn();
+        } else if (tab === "consultant") {
+          updateTradingConsultantSnapshot();
+          renderTradingConsultantChat();
         } else if (tab === "journal") {
           renderJournalHistory();
         }
@@ -2241,7 +2450,7 @@ if (tab === "risk") {
       feeRow.innerHTML = `
         <td>0% - ${feePercent.toFixed(2)}%</td>
         <td>$${feeMinPrice.toFixed(2)} - $${feeMaxPrice.toFixed(2)}</td>
-        <td class="profit-loss">${formatMoney(-breakEvenDollar)} - $0.00</td>
+        <td class="profit-loss">$0.00 - $${breakEvenDollar.toFixed(2)}</td>
       `;
 
       // Determine starting percentage for profit rows
@@ -2273,14 +2482,10 @@ if (tab === "risk") {
           priceEnd = price * (1 - rangeStart / 100);
         }
 
-        // Net profit AFTER fees (entry + estimated exit + locate)
-        const netStart = dollarStart - totalFees;
-        const netEnd = dollarEnd - totalFees;
-
         row.innerHTML = `
           <td>${rangeStart}% - ${rangeEnd}%</td>
           <td>$${priceStart.toFixed(2)} - $${priceEnd.toFixed(2)}</td>
-          <td class="${netStart >= 0 ? "profit-gain" : "profit-loss"}">${formatMoney(netStart)} - ${formatMoney(netEnd)}</td>
+          <td class="profit-gain">$${dollarStart.toFixed(2)} - $${dollarEnd.toFixed(2)}</td>
         `;
       }
     }
@@ -2443,10 +2648,7 @@ function calculateStopLoss() {
       const entryPrice = currentTradeData.price;
       const side = currentTradeData.side;
       const shares = currentTradeData.shares;
-      // Entry fees ONLY (commission + TAF + locate). Exit fees are recomputed
-      // below based on the target price, so using totalFees here would
-      // double-count the estimated exit fees.
-      const entryFees = currentTradeData.entryFees;
+      const entryFees = currentTradeData.totalFees;
 
       // Calculate price change
       const priceChange = targetPrice - entryPrice;
@@ -3453,7 +3655,8 @@ const cumulative = cumulativeMap[entry.date];
         closedPositions: closedPositions,
         locateEntries: locateEntries,
         workerUrl: localStorage.getItem("worker_url"),
-        journalEntries: journalEntries
+        journalEntries: journalEntries,
+        tradingConsultantMessages: tradingConsultantMessages
       };
 
       // Convert to JSON
@@ -3495,7 +3698,8 @@ const cumulative = cumulativeMap[entry.date];
             `- ${importedData.openPositions?.length || 0} Open Positions\n` +
             `- ${importedData.closedPositions?.length || 0} Closed Positions\n` +
             `- ${importedData.locateEntries?.length || 0} Locate Entries\n` +
-            `- ${importedData.journalEntries?.length || 0} Journal Entries\n\n` +
+            `- ${importedData.journalEntries?.length || 0} Journal Entries\n` +
+            `- ${importedData.tradingConsultantMessages?.length || 0} AI Consultant Messages\n\n` +
             `Current data will be REPLACED!`;
 
           if (!confirm(confirm_msg)) {
@@ -3543,6 +3747,11 @@ const cumulative = cumulativeMap[entry.date];
             localStorage.setItem("journalEntries", JSON.stringify(journalEntries));
           }
 
+          if (importedData.tradingConsultantMessages) {
+            tradingConsultantMessages = importedData.tradingConsultantMessages;
+            localStorage.setItem("tradingConsultantMessages", JSON.stringify(tradingConsultantMessages));
+          }
+
           if (importedData.workerUrl) {
             localStorage.setItem("worker_url", importedData.workerUrl);
           }
@@ -3553,6 +3762,8 @@ const cumulative = cumulativeMap[entry.date];
           updateLocateSummary();
           updateWinLossMetrics();
     updateTotalWithdrawn();
+          updateTradingConsultantSnapshot();
+          renderTradingConsultantChat();
 
           alert("✅ Data imported successfully! All your trades and positions are loaded.");
           importFileInput.value = "";
@@ -4060,6 +4271,303 @@ window.openQuizMode = function(id) {
 
 
 
+// ========== AI TRADING CONSULTANT ==========
+let tradingConsultantMessages = JSON.parse(localStorage.getItem("tradingConsultantMessages")) || [];
+let tradingConsultantImageDataUrl = null;
+let tradingConsultantImageName = "";
+
+function getElementValue(id) {
+  const el = document.getElementById(id);
+  return el ? el.value : "";
+}
+
+function parseInputNumber(id) {
+  const raw = getElementValue(id).replace(/[$,]/g, "");
+  const value = parseFloat(raw);
+  return isFinite(value) ? value : 0;
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function calculateConsultantRiskMath(context) {
+  const maxLoss = context.riskRules.maxLossThreshold || 650;
+  const maxShares = context.riskRules.maxSharesCap || 60;
+  const starterShares = context.riskRules.starterShares || 25;
+  const tradePrice = context.tradeForm.price || 0;
+  const tradeShares = context.tradeForm.shares || 0;
+  const manualShares = context.manualPosition.currentShares || 0;
+  const manualAvg = context.manualPosition.currentAvgPrice || 0;
+  const shares = manualShares || tradeShares || starterShares;
+  const avgPrice = manualAvg || tradePrice || 0;
+  const locatePerShare = context.manualPosition.locatePerShare || 0;
+  const side = context.tradeForm.side || "short";
+  const estimatedLocateCost = locatePerShare * Math.max(shares, 0);
+  const knownFees = (context.tradeForm.totalFees || 0) + estimatedLocateCost;
+  const remainingLossRoom = Math.max(maxLoss - knownFees, 0);
+  const stopDistance = shares > 0 ? remainingLossRoom / shares : 0;
+  let maxLossStopPrice = 0;
+
+  if (avgPrice > 0 && shares > 0) {
+    maxLossStopPrice = side === "short" ? avgPrice + stopDistance : Math.max(avgPrice - stopDistance, 0);
+  }
+
+  return {
+    side,
+    sharesUsed: shares,
+    averagePriceUsed: avgPrice,
+    estimatedLocateCost,
+    knownFees,
+    remainingLossRoom,
+    stopDistancePerShare: stopDistance,
+    maxLossStopPrice,
+    starterShares,
+    maxShares,
+    unusedShareCapacity: Math.max(maxShares - shares, 0)
+  };
+}
+
+function getAverageOrdersForConsultant() {
+  const orders = [];
+  const initialUnits = parseInputNumber("avgInitialUnits");
+  const initialPrice = parseInputNumber("avgInitialPrice");
+  if (initialUnits > 0 || initialPrice > 0) {
+    orders.push({ label: "Initial", units: initialUnits, price: initialPrice });
+  }
+
+  document.querySelectorAll("#additionalOrdersContainer [id^='order-']").forEach((row, index) => {
+    const unitsInput = row.querySelector("input[id^='avgUnits']");
+    const priceInput = row.querySelector("input[id^='avgPrice']");
+    const units = unitsInput ? parseFloat(unitsInput.value) || 0 : 0;
+    const price = priceInput ? parseFloat(priceInput.value) || 0 : 0;
+    if (units > 0 || price > 0) {
+      orders.push({ label: `Add ${index + 1}`, units, price });
+    }
+  });
+
+  return orders;
+}
+
+function getTradingConsultantContext() {
+  const context = {
+    timestamp: new Date().toISOString(),
+    app: "Trading Control Center",
+    portfolio: {
+      enteredPortfolioValue: parseInputNumber("portfolioInput"),
+      displayedMarginAmount: marginAmount ? marginAmount.textContent : "$0.00",
+      startingBalance,
+      dailyPortfolioLog: dailyPortfolioLog.slice(-10),
+      withdrawals: withdrawalLog.slice(-10)
+    },
+    tradeForm: {
+      ticker: (tickerInput && tickerInput.value ? tickerInput.value.toUpperCase() : ""),
+      index: indexInput ? indexInput.value : "",
+      orderType: orderTypeSelect ? orderTypeSelect.value : "limit",
+      side: sideSelect ? sideSelect.value : "short",
+      price: tradePriceInput ? parseFloat(tradePriceInput.value) || 0 : 0,
+      shares: sharesInput ? parseInt(sharesInput.value, 10) || 0 : 0,
+      locateFeeTotal: locateFeeInput ? parseFloat(locateFeeInput.value) || 0 : 0,
+      currentCalculatedTrade: currentTradeData
+    },
+    manualPosition: {
+      currentShares: parseInputNumber("aiCurrentShares"),
+      currentAvgPrice: parseInputNumber("aiCurrentAvgPrice"),
+      locatePerShare: parseInputNumber("aiLocatePerShare")
+    },
+    riskRules: {
+      maxLossThreshold: parseInputNumber("aiMaxLoss") || 650,
+      maxSharesCap: parseInputNumber("aiMaxShares") || 60,
+      starterShares: parseInputNumber("aiStarterShares") || 25,
+      executionStyle: "small-big-big; start smaller, add heavier only at higher overextension, never exceed max share cap"
+    },
+    averagePriceOrders: getAverageOrdersForConsultant(),
+    openPositions: openPositions.slice(-10),
+    closedPositionsToday: closedPositions.filter(pos => pos.date === new Date().toLocaleDateString()).slice(-10),
+    locateEntries: locateEntries.slice(-10),
+    savedTrades: savedTrades.slice(-10),
+    level2Data: getElementValue("aiLevel2Data"),
+    strategyNotes: getElementValue("aiStrategyNotes")
+  };
+
+  context.localRiskMath = calculateConsultantRiskMath(context);
+  return context;
+}
+
+function updateTradingConsultantSnapshot() {
+  const snapshot = document.getElementById("aiContextSnapshot");
+  if (!snapshot) return;
+
+  const context = getTradingConsultantContext();
+  const risk = context.localRiskMath;
+  const trade = context.tradeForm;
+
+  snapshot.textContent = [
+    `Ticker: ${trade.ticker || "--"} (${trade.index || "index unknown"})`,
+    `Side: ${trade.side.toUpperCase()} • Order: ${trade.orderType.toUpperCase()} • Price: ${trade.price ? "$" + trade.price.toFixed(3) : "--"} • Shares: ${trade.shares || "--"}`,
+    `Portfolio: ${formatMoney(context.portfolio.enteredPortfolioValue)} • Margin Display: ${context.portfolio.displayedMarginAmount}`,
+    `Max Loss: ${formatMoney(context.riskRules.maxLossThreshold)} • Starter: ${context.riskRules.starterShares} • Max Shares: ${context.riskRules.maxSharesCap}`,
+    `Current/Manual: ${context.manualPosition.currentShares || risk.sharesUsed || 0} shares @ ${risk.averagePriceUsed ? "$" + risk.averagePriceUsed.toFixed(3) : "--"}`,
+    `Locate/share: ${context.manualPosition.locatePerShare ? "$" + context.manualPosition.locatePerShare.toFixed(4) : "--"} • Est. locate cost: ${formatMoney(risk.estimatedLocateCost)}`,
+    `Local max-loss stop estimate: ${risk.maxLossStopPrice ? "$" + risk.maxLossStopPrice.toFixed(3) : "--"} (${risk.stopDistancePerShare ? "$" + risk.stopDistancePerShare.toFixed(3) + " per share room" : "no room calculated"})`,
+    `Open positions: ${context.openPositions.length} • Recent locates: ${context.locateEntries.length} • Recent saved trades: ${context.savedTrades.length}`
+  ].join("\n");
+}
+
+function saveTradingConsultantMessages() {
+  localStorage.setItem("tradingConsultantMessages", JSON.stringify(tradingConsultantMessages.slice(-40)));
+}
+
+function renderTradingConsultantChat() {
+  const chat = document.getElementById("aiChatWindow");
+  if (!chat) return;
+
+  if (!tradingConsultantMessages.length) {
+    chat.innerHTML = `
+      <div class="consultant-message system">
+        <div class="consultant-message-header">System</div>
+        No messages yet. Load your ticker, price, shares, locate info, and Level 2 notes, then ask the consultant for risk math before you touch size.
+      </div>
+    `;
+    return;
+  }
+
+  chat.innerHTML = tradingConsultantMessages.map(msg => `
+    <div class="consultant-message ${msg.role === "user" ? "user" : "assistant"}">
+      <div class="consultant-message-header">${msg.role === "user" ? "You" : "Consultant"}</div>
+      ${escapeHtml(msg.content)}
+    </div>
+  `).join("");
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function setTradingConsultantBusy(isBusy) {
+  const btn = document.getElementById("aiAskButton");
+  if (!btn) return;
+  btn.disabled = isBusy;
+  btn.textContent = isBusy ? "Consultant Thinking..." : "Ask Consultant";
+}
+
+async function askTradingConsultant(forcedPrompt) {
+  const input = document.getElementById("aiConsultantInput");
+  const userPrompt = (forcedPrompt || (input ? input.value : "")).trim();
+
+  if (!userPrompt) {
+    alert("Type a question or use one of the quick prompt buttons.");
+    return;
+  }
+
+  updateTradingConsultantSnapshot();
+
+  tradingConsultantMessages.push({ role: "user", content: userPrompt, time: new Date().toISOString() });
+  saveTradingConsultantMessages();
+  renderTradingConsultantChat();
+
+  if (input && !forcedPrompt) input.value = "";
+  setTradingConsultantBusy(true);
+
+  try {
+    const response = await fetch("/.netlify/functions/trading-consultant", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: userPrompt,
+        context: getTradingConsultantContext(),
+        recentMessages: tradingConsultantMessages.slice(-8).map(msg => ({ role: msg.role, content: msg.content })),
+        image: tradingConsultantImageDataUrl ? {
+          name: tradingConsultantImageName,
+          dataUrl: tradingConsultantImageDataUrl
+        } : null
+      })
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.error || `Request failed with status ${response.status}`);
+    }
+
+    tradingConsultantMessages.push({ role: "assistant", content: data.reply || "No response returned.", time: new Date().toISOString() });
+  } catch (error) {
+    tradingConsultantMessages.push({
+      role: "assistant",
+      content: `I could not reach the consultant API.\n\nCheck that you deployed the Netlify function and added OPENAI_API_KEY in your site environment variables.\n\nError: ${error.message}`,
+      time: new Date().toISOString()
+    });
+  } finally {
+    saveTradingConsultantMessages();
+    renderTradingConsultantChat();
+    setTradingConsultantBusy(false);
+  }
+}
+
+function setupTradingConsultantEvents() {
+  const askButton = document.getElementById("aiAskButton");
+  const clearButton = document.getElementById("aiClearChatButton");
+  const refreshButton = document.getElementById("aiRefreshSnapshotButton");
+  const imageInput = document.getElementById("aiImageInput");
+  const imageStatus = document.getElementById("aiImageStatus");
+  const clearImageButton = document.getElementById("aiClearImageButton");
+
+  if (askButton) askButton.addEventListener("click", () => askTradingConsultant());
+  if (refreshButton) refreshButton.addEventListener("click", updateTradingConsultantSnapshot);
+
+  if (clearButton) {
+    clearButton.addEventListener("click", () => {
+      if (!confirm("Clear the AI Consultant chat history?")) return;
+      tradingConsultantMessages = [];
+      saveTradingConsultantMessages();
+      renderTradingConsultantChat();
+    });
+  }
+
+  document.querySelectorAll("[data-ai-prompt]").forEach(button => {
+    button.addEventListener("click", () => askTradingConsultant(button.getAttribute("data-ai-prompt")));
+  });
+
+  if (imageInput) {
+    imageInput.addEventListener("change", (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      if (file.size > 4 * 1024 * 1024) {
+        alert("Screenshot is too large. Use an image under 4 MB.");
+        imageInput.value = "";
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        tradingConsultantImageDataUrl = reader.result;
+        tradingConsultantImageName = file.name;
+        if (imageStatus) imageStatus.textContent = `Attached: ${file.name}`;
+        if (clearImageButton) clearImageButton.style.display = "inline-flex";
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if (clearImageButton) {
+    clearImageButton.addEventListener("click", () => {
+      tradingConsultantImageDataUrl = null;
+      tradingConsultantImageName = "";
+      if (imageInput) imageInput.value = "";
+      if (imageStatus) imageStatus.textContent = "No screenshot attached.";
+      clearImageButton.style.display = "none";
+    });
+  }
+
+  ["aiMaxLoss", "aiMaxShares", "aiStarterShares", "aiCurrentShares", "aiCurrentAvgPrice", "aiLocatePerShare", "aiLevel2Data", "aiStrategyNotes"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("input", updateTradingConsultantSnapshot);
+  });
+}
+
+
 // ========== INIT ==========
     updateLocateVisibility();
     calculate();
@@ -4071,6 +4579,9 @@ window.openQuizMode = function(id) {
     updateTotalWithdrawn();
     calculateStopLoss();
     calculateAveragePrice();
+    setupTradingConsultantEvents();
+    updateTradingConsultantSnapshot();
+    renderTradingConsultantChat();
   </script>
 </body>
 </html>
