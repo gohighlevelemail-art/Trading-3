@@ -2241,7 +2241,7 @@ if (tab === "risk") {
       feeRow.innerHTML = `
         <td>0% - ${feePercent.toFixed(2)}%</td>
         <td>$${feeMinPrice.toFixed(2)} - $${feeMaxPrice.toFixed(2)}</td>
-        <td class="profit-loss">$0.00 - $${breakEvenDollar.toFixed(2)}</td>
+        <td class="profit-loss">${formatMoney(-breakEvenDollar)} - $0.00</td>
       `;
 
       // Determine starting percentage for profit rows
@@ -2273,10 +2273,14 @@ if (tab === "risk") {
           priceEnd = price * (1 - rangeStart / 100);
         }
 
+        // Net profit AFTER fees (entry + estimated exit + locate)
+        const netStart = dollarStart - totalFees;
+        const netEnd = dollarEnd - totalFees;
+
         row.innerHTML = `
           <td>${rangeStart}% - ${rangeEnd}%</td>
           <td>$${priceStart.toFixed(2)} - $${priceEnd.toFixed(2)}</td>
-          <td class="profit-gain">$${dollarStart.toFixed(2)} - $${dollarEnd.toFixed(2)}</td>
+          <td class="${netStart >= 0 ? "profit-gain" : "profit-loss"}">${formatMoney(netStart)} - ${formatMoney(netEnd)}</td>
         `;
       }
     }
@@ -2439,7 +2443,10 @@ function calculateStopLoss() {
       const entryPrice = currentTradeData.price;
       const side = currentTradeData.side;
       const shares = currentTradeData.shares;
-      const entryFees = currentTradeData.totalFees;
+      // Entry fees ONLY (commission + TAF + locate). Exit fees are recomputed
+      // below based on the target price, so using totalFees here would
+      // double-count the estimated exit fees.
+      const entryFees = currentTradeData.entryFees;
 
       // Calculate price change
       const priceChange = targetPrice - entryPrice;
