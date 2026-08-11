@@ -2880,6 +2880,119 @@ function calculateStopLoss() {
     };
 
     // ========== PORTFOLIO TAB FUNCTIONS ==========
+
+    // Load an existing portfolio position into Fee Structure + Risk Management
+    // without creating/saving a duplicate trade.
+    function loadExistingPositionForRisk(pos) {
+      if (!pos) {
+        alert("Could not find that position.");
+        return;
+      }
+
+      const price = parseFloat(pos.price) || 0;
+      const shares = parseInt(pos.shares, 10) || 0;
+      const grossAmount = isFinite(pos.grossAmount)
+        ? Number(pos.grossAmount)
+        : price * shares;
+
+      const entryCommission = Number(pos.entryCommission) || 0;
+      const entryTaf = Number(pos.entryTaf) || 0;
+      const locateFee = Number(pos.locateFee) || 0;
+      const entryFees = isFinite(pos.entryFees)
+        ? Number(pos.entryFees)
+        : entryCommission + entryTaf + (pos.side === "short" ? locateFee : 0);
+
+      const exitCommission = Number(pos.exitCommission) || 0;
+      const exitTaf = Number(pos.exitTaf) || 0;
+      const exitFees = isFinite(pos.exitFees)
+        ? Number(pos.exitFees)
+        : exitCommission + exitTaf;
+
+      const totalFees = isFinite(pos.totalFees)
+        ? Number(pos.totalFees)
+        : entryFees + exitFees;
+
+      const netAmountValue = isFinite(pos.netAmount)
+        ? Number(pos.netAmount)
+        : grossAmount + totalFees;
+
+      // Populate Fee Structure inputs so the selected position is visible there.
+      tickerInput.value = (pos.ticker || "").toUpperCase();
+      indexInput.value = pos.index || "";
+      orderTypeSelect.value = pos.orderType || "limit";
+      sideSelect.value = pos.side || "long";
+      tradePriceInput.value = price || "";
+      sharesInput.value = shares || "";
+      locateFeeInput.value = pos.side === "short" ? locateFee : "";
+
+      updateLocateVisibility();
+
+      // IMPORTANT: use the position's already-stored fee data instead of
+      // recalculating/re-executing the trade.
+      currentTradeData = {
+        ...pos,
+        ticker: (pos.ticker || "").toUpperCase(),
+        index: pos.index || "",
+        orderType: pos.orderType || "limit",
+        side: pos.side || "long",
+        price,
+        shares,
+        locateFee,
+        entryCommission,
+        entryTaf,
+        entryFees,
+        exitCommission,
+        exitTaf,
+        exitFees,
+        totalFees,
+        grossAmount,
+        netAmount: netAmountValue,
+        isZeroFree: Boolean(pos.isZeroFree)
+      };
+
+      // Reflect the selected position in the Fee Structure summary.
+      summaryOrder.textContent =
+        `${currentTradeData.side === "short" ? "Short" : "Long"} ` +
+        `${shares} ${currentTradeData.ticker} @ $${price.toFixed(2)} ` +
+        `(${currentTradeData.orderType === "market" ? "Market" : "Limit"})`;
+      summaryGross.textContent = formatMoney(grossAmount);
+      summaryZeroFree.textContent = currentTradeData.isZeroFree
+        ? "Qualifies (ZeroFree)"
+        : "Paid commission";
+      summaryBadge.className = currentTradeData.isZeroFree
+        ? "summary-badge free"
+        : "summary-badge paid";
+      summaryBadge.textContent = currentTradeData.isZeroFree
+        ? "ZeroFree Trade"
+        : "Commission Charged";
+
+      feeCommission.textContent = formatMoney(entryCommission);
+      feeTAF.textContent = formatMoney(entryTaf);
+      feeLocate.textContent = formatMoney(pos.side === "short" ? locateFee : 0);
+      feeTotal.textContent = formatMoney(totalFees);
+      netAmount.textContent = formatMoney(netAmountValue);
+      statusMessage.textContent =
+        `Loaded ${currentTradeData.ticker} from Current Portfolio for risk analysis. No duplicate trade was created.`;
+
+      // Switch to Risk Management. The existing tab handler calls
+      // updateRiskManagement(), generateProfitTable(), and calculateStopLoss().
+      const riskTabButton = document.querySelector('.tab-button[data-tab="risk"]');
+      if (riskTabButton) {
+        riskTabButton.click();
+      } else {
+        updateRiskManagement();
+      }
+    }
+
+    window.riskOpenPosition = function(index) {
+      loadExistingPositionForRisk(openPositions[index]);
+    };
+
+    window.riskClosedPosition = function(timestamp) {
+      const pos = closedPositions.find(p => p.closeTimestamp === timestamp);
+      loadExistingPositionForRisk(pos);
+    };
+
     function updatePortfolioTab() {
       updateDailyPnL();
       displayOpenPositions();
@@ -2978,13 +3091,23 @@ function calculateStopLoss() {
           </td>
           <td id="pnl${index}" style="font-weight: 600;">--</td>
           <td>
-            <button 
-              class="btn btn-execute" 
-              style="padding: 4px 10px; font-size: 11px;"
-              onclick="closePosition(${index})"
-            >
-              Close
-            </button>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <button
+                class="btn btn-consultant"
+                style="padding: 4px 10px; font-size: 11px;"
+                onclick="riskOpenPosition(${index})"
+                title="Load this position into Risk Management"
+              >
+                🛡️ Risk
+              </button>
+              <button 
+                class="btn btn-execute" 
+                style="padding: 4px 10px; font-size: 11px;"
+                onclick="closePosition(${index})"
+              >
+                Close
+              </button>
+            </div>
           </td>
         `;
 
@@ -3159,13 +3282,23 @@ function calculateStopLoss() {
           <td>$${pos.totalFees.toFixed(2)}</td>
           <td style="font-weight: 600; color: ${pnlColor};">${formatMoney(pos.pnl)}</td>
           <td>
-            <button 
-              class="btn btn-cancel" 
-              style="padding: 3px 8px; font-size: 10px;"
-              onclick="deleteClosedPosition(${pos.closeTimestamp})"
-            >
-              Delete
-            </button>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <button
+                class="btn btn-consultant"
+                style="padding: 3px 8px; font-size: 10px;"
+                onclick="riskClosedPosition(${pos.closeTimestamp})"
+                title="Load this closed position into Risk Management"
+              >
+                🛡️ Risk
+              </button>
+              <button 
+                class="btn btn-cancel" 
+                style="padding: 3px 8px; font-size: 10px;"
+                onclick="deleteClosedPosition(${pos.closeTimestamp})"
+              >
+                Delete
+              </button>
+            </div>
           </td>
         `;
       });
